@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mark Attendance — JD TECH</title>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500;600&display=swap"
+    rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/base.css') }}">
+  <link rel="manifest" href="/manifest.json">
+</head>
+
+<body>
+  <div class="live-bg"></div>
+  <div class="noise-overlay"></div>
+  <div class="watermark">JD TECH</div>
+  <div class="entry-wrap">
+
+    <!-- Logo -->
+    <div class="logo-bar">
+      <img src="{{ url_for('static', filename='logo.jpg') }}" alt="JD TECH">
+    </div>
+
+    <!-- Flash messages -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+    {% for cat, msg in messages %}
+    <div class="alert alert-{{ cat }}">
+      {% if cat == 'success' %}✓{% elif cat == 'info' %}ℹ{% else %}✗{% endif %} {{ msg }}
+    </div>
+    {% endfor %}
+    {% endwith %}
+
+    <div class="card">
+
+      <!-- Greeting -->
+      <div class="greeting">
+        <div class="hello">Welcome back</div>
+        <h1>{{ session.get('full_name', 'User') }}</h1>
+        <div class="date-label" id="dateLabel">{{ today }}</div>
+      </div>
+
+      <!-- Live Clock -->
+      <div class="clock-wrap">
+        <div class="clock">
+          <span id="clockH">--</span>:<span id="clockM">--</span><span class="clock-seconds">:<span
+              id="clockS">--</span></span><span class="clock-ampm" id="clockAMPM"></span>
+        </div>
+      </div>
+
+      {% if employee %}
+      <!-- Employee card -->
+      <div class="emp-info">
+        <div class="emp-avatar">{{ employee.full_name[0] }}</div>
+        <div>
+          <div class="emp-name">{{ employee.full_name }}</div>
+          <div class="emp-meta">{{ employee.department }} · {{ employee.position or 'Employee' }}</div>
+        </div>
+        <span class="emp-id-badge">{{ employee.employee_id }}</span>
+      </div>
+      {% endif %}
+
+      {% if existing %}
+      <!-- Already marked -->
+      <div class="status-box already">
+        <div class="status-icon">✅</div>
+        <div class="status-text">
+          <strong>Attendance Already Recorded</strong>
+          <span>Check-in: {{ existing.check_in or '—' }} &nbsp;·&nbsp; Status: {{ existing.status }}</span>
+        </div>
+      </div>
+
+      {% if session.get('role') == 'admin' %}
+      <a href="{{ url_for('dashboard') }}" class="btn btn-dash">Go to Dashboard →</a>
+      {% else %}
+      <a href="{{ url_for('logout') }}" class="btn btn-dash">Sign Out</a>
+      {% endif %}
+
+      {% elif employee_id %}
+      <!-- Pending — show mark button -->
+      <div class="status-box pending">
+        <div class="status-icon">🕐</div>
+        <div class="status-text">
+          <strong>Attendance Not Yet Marked</strong>
+          <span>Click below to record your entry time for today.</span>
+        </div>
+      </div>
+      <form method="POST">
+        <div class="btn-wrap">
+          <div class="pulse-ring"></div>
+          <button type="submit" class="btn btn-mark" id="markBtn">Mark My Attendance</button>
+        </div>
+      </form>
+      {% if session.get('role') == 'admin' %}
+      <a href="{{ url_for('dashboard') }}" class="btn btn-dash">Skip — Go to Dashboard</a>
+      {% else %}
+      <a href="{{ url_for('logout') }}" class="btn btn-dash">Sign Out</a>
+      {% endif %}
+
+      {% else %}
+      <!-- No employee linked -->
+      <div class="no-emp-notice">
+        <div class="icon">🔗</div>
+        <p>Your account is not linked to an employee record.<br>
+          Ask an admin to link your account in <strong>User Management</strong>.</p>
+      </div>
+      {% if session.get('role') == 'admin' %}
+      <a href="{{ url_for('dashboard') }}" class="btn btn-dash">Continue to Dashboard →</a>
+      {% else %}
+      <a href="{{ url_for('logout') }}" class="btn btn-dash">Sign Out</a>
+      {% endif %}
+      {% endif %}
+
+    </div><!-- /card -->
+  </div><!-- /entry-wrap -->
+
+  <script>
+    // Live clock
+    function tick() {
+      const now = new Date();
+      let h = now.getHours();
+      const ampm = h >= 12 ? 'PM' : 'AM';
+      h = h % 12 || 12;
+      const m = String(now.getMinutes()).padStart(2, '0');
+      const s = String(now.getSeconds()).padStart(2, '0');
+      document.getElementById('clockH').textContent = String(h).padStart(2, '0');
+      document.getElementById('clockM').textContent = m;
+      document.getElementById('clockS').textContent = s;
+      document.getElementById('clockAMPM').textContent = ampm;
+
+      // Nice date label
+      const opts = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+      document.getElementById('dateLabel').textContent = now.toLocaleDateString('en-IN', opts);
+    }
+    tick();
+    setInterval(tick, 1000);
+
+    // Disable mark button after click to prevent double submit
+    const btn = document.getElementById('markBtn');
+    if (btn) {
+      btn.closest('form').addEventListener('submit', () => {
+        btn.textContent = 'Saving…';
+        btn.disabled = true;
+        btn.style.opacity = '.7';
+      });
+    }
+
+    // Register PWA Service Worker
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/sw.js')
+          .then(reg => console.log('Service Worker registered successfully!', reg.scope))
+          .catch(err => console.log('Service Worker registration failed:', err));
+      });
+    }
+  </script>
+</body>
+
+</html>

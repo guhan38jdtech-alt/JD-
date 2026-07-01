@@ -1,0 +1,18 @@
+{
+  "short_name": "JD Attendance",
+  "name": "JD TECH Attendance System",
+  "description": "Progressive Web Application for tracking corporate attendance at JD TECH.",
+  "icons": [
+    {
+      "src": "/static/logo.jpg",
+      "type": "image/jpeg",
+      "sizes": "512x512",
+      "purpose": "any maskable"
+    }
+  ],
+  "start_url": "/",
+  "background_color": "#050811",
+  "theme_color": "#00d4aa",
+  "display": "standalone",
+  "orientation": "portrait"
+}

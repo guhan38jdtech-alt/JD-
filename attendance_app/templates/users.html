@@ -1,0 +1,146 @@
+{% extends 'base.html' %}
+{% block title %}Users — JD TECH{% endblock %}
+{% block page_title %}User Management{% endblock %}
+{% block page_subtitle %}Admin access control{% endblock %}
+
+{% block content %}
+{% set admin_count = users|selectattr('role','eq','admin')|list|length %}
+{% set emp_count = users|selectattr('role','eq','employee')|list|length %}
+
+<!-- Quick Stats Row -->
+<div class="grid grid-3" style="gap:24px; margin-bottom: 24px;">
+  <div class="card" style="display:flex; align-items:center; gap:16px; padding: 24px;">
+    <div style="font-size:32px; background: rgba(59,130,246,0.1); width: 64px; height: 64px; border-radius: 16px; display:flex; align-items:center; justify-content:center;">👥</div>
+    <div>
+      <div style="font-size:13px; color:var(--muted); text-transform:uppercase; letter-spacing:1px; font-weight:600;">Total Users</div>
+      <div style="font-size:28px; font-weight:800; font-family:'Syne',sans-serif;">{{ users|length }}</div>
+    </div>
+  </div>
+  <div class="card" style="display:flex; align-items:center; gap:16px; padding: 24px;">
+    <div style="font-size:32px; background: rgba(239,68,68,0.1); width: 64px; height: 64px; border-radius: 16px; display:flex; align-items:center; justify-content:center;">🛡️</div>
+    <div>
+      <div style="font-size:13px; color:var(--muted); text-transform:uppercase; letter-spacing:1px; font-weight:600;">System Admins</div>
+      <div style="font-size:28px; font-weight:800; font-family:'Syne',sans-serif;">{{ admin_count }}</div>
+    </div>
+  </div>
+  <div class="card" style="display:flex; align-items:center; gap:16px; padding: 24px;">
+    <div style="font-size:32px; background: rgba(16,185,129,0.1); width: 64px; height: 64px; border-radius: 16px; display:flex; align-items:center; justify-content:center;">👨‍💻</div>
+    <div>
+      <div style="font-size:13px; color:var(--muted); text-transform:uppercase; letter-spacing:1px; font-weight:600;">Employee Users</div>
+      <div style="font-size:28px; font-weight:800; font-family:'Syne',sans-serif;">{{ emp_count }}</div>
+    </div>
+  </div>
+</div>
+
+
+<div class="grid grid-2 users-main-grid" style="gap:24px; align-items:start;">
+  <!-- Add user form -->
+  <div class="card">
+    <div class="card-title">➕ Create New User</div>
+    <form method="POST">
+      <div class="form-group">
+        <label for="create_full_name">Full Name</label>
+        <input id="create_full_name" name="full_name" placeholder="Full name" required>
+      </div>
+      <div class="form-group">
+        <label for="create_username">Username</label>
+        <input id="create_username" name="username" placeholder="Login username" required>
+      </div>
+      <div class="form-group">
+        <label for="create_password">Password</label>
+        <input id="create_password" name="password" type="password" placeholder="Password" required>
+      </div>
+      <div class="form-group">
+        <label for="create_role">Role</label>
+        <select id="create_role" name="role" required>
+          <option value="employee">Employee</option>
+          <option value="admin">Admin</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label for="create_department">Department</label>
+        <input id="create_department" name="department" placeholder="Department">
+      </div>
+      <div class="form-group">
+        <label for="create_email">Email</label>
+        <input id="create_email" name="email" type="email" placeholder="Email">
+      </div>
+      <div class="form-group">
+        <label for="create_employee_id">Employee ID <span style="color:var(--muted);font-weight:400;text-transform:none;font-size:11px;">(Select existing or type new to auto-create)</span></label>
+        <input id="create_employee_id" name="employee_id" list="emp-list" placeholder="e.g. EMP010" autocomplete="off">
+        <datalist id="emp-list">
+          {% for emp in employees %}
+          <option value="{{ emp.employee_id }}">{{ emp.full_name }}</option>
+          {% endfor %}
+        </datalist>
+      </div>
+      <button type="submit" class="btn btn-primary">Create User</button>
+    </form>
+  </div>
+
+  <!-- Users list -->
+  <div class="card">
+    <div class="card-title">👤 System Users</div>
+    <div class="table-wrap">
+      <table style="width: 100%;">
+        <thead>
+          <tr>
+            <th style="padding: 16px;">User Name</th>
+            <th style="padding: 16px;">Credentials</th>
+            <th style="padding: 16px;">Department</th>
+            <th style="padding: 16px;">Linked Employee</th>
+            <th style="padding: 16px;">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for u in users %}
+          <tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">
+            <td style="padding: 16px;">
+              <div style="display:flex; align-items:center; gap: 12px;">
+                <div style="width: 36px; height: 36px; border-radius: 50%; background: linear-gradient(135deg, var(--accent), var(--accent2)); display:flex; align-items:center; justify-content:center; color:#000; font-weight:800; font-family:'Syne',sans-serif; flex-shrink: 0;">
+                  {{ u.full_name[0] | upper }}
+                </div>
+                <div>
+                  <strong style="font-size: 14px;">{{ u.full_name }}</strong><br>
+                  <span class="badge badge-{{ u.role }}" style="font-size: 10px; margin-top: 4px; display: inline-block;">{{ u.role }}</span>
+                </div>
+              </div>
+            </td>
+            <td style="padding: 16px; color:var(--muted); font-size:13px;">
+              {{ u.username }}<br>
+              <span style="font-size: 11px; opacity: 0.7;">{{ u.email or 'No email' }}</span>
+            </td>
+            <td style="padding: 16px; color:var(--text); font-size:13px;">
+              {{ u.department or '—' }}
+            </td>
+            <td style="padding: 16px;">
+              {% if u.employee_id %}
+              <span class="badge badge-employee" style="background: rgba(0,212,170,0.1); border: 1px solid rgba(0,212,170,0.2); color: var(--accent); padding: 4px 10px; border-radius: 8px;">{{ u.employee_id }}</span>
+              {% else %}
+              <span style="color:var(--muted);font-size:12px; font-style: italic;">Not Linked</span>
+              {% endif %}
+            </td>
+            <td style="padding: 16px;">
+              {% if u.id != session.user_id %}
+              <div style="display: flex; gap: 8px;">
+                <a href="{{ url_for('edit_user', uid=u.id) }}" class="btn btn-secondary btn-sm" style="padding: 6px 12px; font-size: 12px; border-radius: 6px;">Edit</a>
+                <form method="POST" action="{{ url_for('delete_user', uid=u.id) }}"
+                      onsubmit="return confirm('Delete user {{ u.username }}?');" style="margin: 0;">
+                  <button type="submit" class="btn btn-danger btn-sm" style="padding: 6px 12px; font-size: 12px; border-radius: 6px;">Remove</button>
+                </form>
+              </div>
+              {% else %}
+              <div style="display: flex; gap: 8px;">
+                <a href="{{ url_for('edit_user', uid=u.id) }}" class="btn btn-secondary btn-sm" style="padding: 6px 12px; font-size: 12px; border-radius: 6px;">Edit Profile</a>
+                <span style="font-size:12px; color:var(--muted); background: rgba(255,255,255,0.05); padding: 6px 12px; border-radius: 6px; font-weight: 600;">Current User</span>
+              </div>
+              {% endif %}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}

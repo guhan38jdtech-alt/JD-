@@ -1,0 +1,119 @@
+{% extends 'base.html' %}
+{% block title %}Geo-Fence Manager — JD TECH{% endblock %}
+{% block page_title %}📍 Geo-Fence Manager{% endblock %}
+{% block page_subtitle %}Set GPS coordinates for each site location{% endblock %}
+
+{% block content %}
+<style>
+  .geo-table-wrap { overflow-x: auto; }
+  .geo-table { width:100%; border-collapse:collapse; }
+  .geo-table th {
+    font-size:11px; font-weight:700; color:var(--muted);
+    text-transform:uppercase; letter-spacing:1px;
+    padding:10px 14px; border-bottom:1px solid var(--border);
+    text-align:left;
+  }
+  .geo-table td { padding:10px 14px; border-bottom:1px solid rgba(255,255,255,0.04); vertical-align:middle; }
+  .geo-table tr:hover td { background:rgba(255,255,255,0.02); }
+  .geo-input {
+    background:rgba(0,0,0,0.3); border:1px solid rgba(255,255,255,0.08);
+    border-radius:8px; color:var(--text); font-size:13px;
+    padding:7px 10px; width:130px; outline:none; font-family:'Plus Jakarta Sans',sans-serif;
+    transition:border-color 0.2s;
+  }
+  .geo-input:focus { border-color:var(--accent); }
+  .geo-input.radius-input { width:80px; }
+  .btn-save-geo {
+    background:linear-gradient(135deg,var(--accent),#00b896);
+    color:#000; border:none; border-radius:8px;
+    padding:7px 16px; font-size:12px; font-weight:700;
+    cursor:pointer; font-family:'Syne',sans-serif;
+    transition:all 0.2s;
+  }
+  .btn-save-geo:hover { opacity:0.85; transform:translateY(-1px); }
+  .geo-status-set   { color:#10b981; font-size:12px; font-weight:600; }
+  .geo-status-unset { color:var(--muted); font-size:12px; }
+  .info-card {
+    background:rgba(0,212,170,0.07); border:1px solid rgba(0,212,170,0.2);
+    border-radius:14px; padding:18px 22px; margin-bottom:24px;
+    display:flex; align-items:flex-start; gap:14px;
+  }
+  .info-icon { font-size:24px; flex-shrink:0; margin-top:2px; }
+  .info-text { font-size:13px; color:var(--muted); line-height:1.6; }
+  .info-text strong { color:var(--accent); }
+</style>
+
+<!-- Info Banner -->
+<div class="info-card">
+  <div class="info-icon">ℹ️</div>
+  <div class="info-text">
+    <strong>How to set coordinates:</strong> Open Google Maps → Right-click on the site location → Copy the coordinates (e.g. <code>13.0827, 80.2707</code>).
+    Paste Latitude and Longitude below. <strong>Radius (meters)</strong> is the allowed distance — default is <strong>200m</strong>.
+    <br>Locations without coordinates set will <strong>skip geo-check</strong> and allow attendance normally.
+    <br><strong>WFH and Absent</strong> statuses are never geo-checked.
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-title" style="display:flex; align-items:center; gap:8px; color:var(--accent);">
+    🗺️ Site Geo-Fence Coordinates
+    <span style="font-size:12px; font-weight:400; color:var(--muted); margin-left:auto;">
+      {{ locations|selectattr('latitude')|list|length }} / {{ locations|length }} sites configured
+    </span>
+  </div>
+
+  <div class="geo-table-wrap">
+    <table class="geo-table">
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Site Name</th>
+          <th>Status</th>
+          <th>Latitude</th>
+          <th>Longitude</th>
+          <th>Radius (m)</th>
+          <th>Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for loc in locations %}
+        <tr>
+          <td style="color:var(--muted); font-size:12px;">{{ loop.index }}</td>
+          <td>
+            <strong style="font-size:14px;">{{ loc.name }}</strong>
+          </td>
+          <td>
+            {% if loc.latitude is not none and loc.longitude is not none %}
+              <span class="geo-status-set">✅ Geo-fence Active</span>
+            {% else %}
+              <span class="geo-status-unset">⚪ Not Set</span>
+            {% endif %}
+          </td>
+          <form method="POST" action="{{ url_for('manage_locations') }}" style="display:contents;">
+            <input type="hidden" name="loc_id" value="{{ loc.id }}">
+            <td>
+              <input type="number" step="0.000001" name="latitude" class="geo-input"
+                     placeholder="e.g. 13.0827"
+                     value="{{ loc.latitude if loc.latitude is not none else '' }}">
+            </td>
+            <td>
+              <input type="number" step="0.000001" name="longitude" class="geo-input"
+                     placeholder="e.g. 80.2707"
+                     value="{{ loc.longitude if loc.longitude is not none else '' }}">
+            </td>
+            <td>
+              <input type="number" name="radius_meters" class="geo-input radius-input"
+                     placeholder="200" min="50" max="5000"
+                     value="{{ loc.radius_meters or 200 }}">
+            </td>
+            <td>
+              <button type="submit" class="btn-save-geo">💾 Save</button>
+            </td>
+          </form>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

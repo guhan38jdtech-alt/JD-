@@ -1,0 +1,527 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>My Attendance — JD TECH</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/base.css') }}">
+<link rel="manifest" href="/manifest.json">
+</head>
+<body>
+<div class="live-bg"></div>
+<div class="noise-overlay"></div>
+<div class="watermark">JD TECH</div>
+
+<div class="page-wrap">
+
+  <!-- Topbar -->
+  <div class="topbar">
+    <div class="topbar-brand">JD TECH</div>
+    <div class="topbar-user">
+      {% if employee %}
+      <div class="topbar-avatar">{{ session.full_name[0] | upper }}</div>
+      <div>
+        <div class="topbar-name">{{ session.full_name }}</div>
+        <div class="topbar-role">Employee · {{ employee.department }}</div>
+      </div>
+      {% endif %}
+      <a href="{{ url_for('logout') }}" class="btn-logout">Sign Out</a>
+    </div>
+  </div>
+
+  <!-- Flash messages -->
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% for cat, msg in messages %}
+      <div class="alert alert-{{ cat }}">
+        {% if cat == 'success' %}✓{% elif cat == 'info' %}ℹ{% else %}✗{% endif %} {{ msg }}
+      </div>
+    {% endfor %}
+  {% endwith %}
+
+  <!-- Page Header -->
+  <div class="page-header">
+    <h1>📋 My Attendance</h1>
+    <p>View your personal attendance history and today's status</p>
+  </div>
+
+  {% if employee %}
+
+  <!-- Today's Status Card -->
+  <div class="today-card">
+    <div class="today-left">
+      <div class="today-icon">
+        {% if today_record %}
+          {% if today_record.status == 'Present' %}✅
+          {% elif today_record.status == 'Absent' %}❌
+          {% else %}🕐{% endif %}
+        {% else %}📅{% endif %}
+      </div>
+      <div>
+        <div class="today-title">Today's Status</div>
+        <div class="today-date">{{ today }}</div>
+      </div>
+    </div>
+    <div style="display: flex; align-items: center; gap: 24px;">
+      {% if today_record %}
+        <div class="check-times" style="text-align: left;">
+          <span style="font-size:11px; color:var(--muted); text-transform:uppercase; letter-spacing:1px; display:block; margin-bottom:4px;">Location</span>
+          {% if today_record.location %}
+            {% if today_record.location == 'WFH' %}
+            <span style="background:rgba(139,92,246,0.12); color:#8b5cf6; border:1px solid rgba(139,92,246,0.25); padding: 5px 12px; border-radius: 20px; font-size:13px; font-weight:600; display:inline-block;">🏠 WFH</span>
+            {% elif today_record.location == 'Office' %}
+            <span style="background:rgba(59,130,246,0.12); color:#3b82f6; border:1px solid rgba(59,130,246,0.25); padding: 5px 12px; border-radius: 20px; font-size:13px; font-weight:600; display:inline-block;">🏢 Office</span>
+            {% else %}
+            <span style="background:rgba(0,212,170,0.12); color:var(--accent); border:1px solid rgba(0,212,170,0.25); padding: 5px 12px; border-radius: 20px; font-size:13px; font-weight:600; display:inline-block;">📍 {{ today_record.location }}</span>
+            {% endif %}
+          {% else %}
+          <span style="color:var(--muted); font-size:13px;">—</span>
+          {% endif %}
+        </div>
+        
+        {% if today_record.status == 'Present' %}
+        <span class="status-pill pill-present">● Present</span>
+        {% elif today_record.status == 'Absent' %}
+        <span class="status-pill pill-absent">● Absent</span>
+        {% else %}
+        <span class="status-pill pill-halfday">● Half Day</span>
+        {% endif %}
+      {% else %}
+        <span class="status-pill pill-none">⏳ Not Yet Marked</span>
+      {% endif %}
+    </div>
+  </div>
+
+  {% if not today_record %}
+  <!-- Manual Attendance Entry Form -->
+  <div class="card" style="margin-bottom: 24px; border: 1px solid rgba(0, 212, 170, 0.2); box-shadow: 0 10px 40px rgba(0, 212, 170, 0.05);">
+    <div class="card-title" style="color: var(--accent); display: flex; align-items: center; gap: 8px;">
+      ✍️ Manual Attendance Entry
+    </div>
+    <form method="POST" action="{{ url_for('my_attendance') }}" id="manualAttendanceForm">
+      <!-- Hidden GPS fields populated by JS before submit -->
+      <input type="hidden" id="emp_lat" name="emp_lat" value="">
+      <input type="hidden" id="emp_lng" name="emp_lng" value="">
+      <!-- geo_skip = 'no_coords' when location has no saved coordinates -->
+      <input type="hidden" id="geo_skip" name="geo_skip" value="">
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; margin-bottom: 20px;">
+        
+        <!-- Status Options -->
+        <div>
+          <label style="display:block; font-size:11px; font-weight:600; color:var(--muted); text-transform:uppercase; letter-spacing:1px; margin-bottom:10px;">Select Attendance Status</label>
+          <div style="display:flex; gap:10px; flex-wrap:wrap;">
+            {% for s, cls, emoji in [('Present','present','✓'),('Absent','absent','✗'),('Half Day','halfday','½')] %}
+            <label class="status-option-label" style="display:flex; align-items:center; gap:8px; cursor:pointer; font-size:13px; font-weight:600; color:var(--text); background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06); border-radius: 10px; padding: 10px 16px; flex: 1; min-width: 100px; justify-content: center; transition: all 0.25s;">
+              <input type="radio" name="status" value="{{ s }}" {% if s == 'Present' %}checked{% endif %} style="width:16px; height:16px; accent-color:var(--{{ cls }}); cursor:pointer; margin:0;" onchange="updateNotesField(this.value)">
+              <span style="color: var(--{{ cls }});">{{ emoji }} {{ s }}</span>
+            </label>
+            {% endfor %}
+          </div>
+        </div>
+
+          <!-- Location Dropdown -->
+          <div>
+            <label for="manual_location" style="display:block; font-size:11px; font-weight:600; color:var(--muted); text-transform:uppercase; letter-spacing:1px; margin-bottom:10px;">Select Location</label>
+            <select id="manual_location" class="location-select" name="location" required style="width:100%; padding:11px 14px; font-size:14px; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.08); border-radius: 10px; color: var(--text); cursor:pointer; font-family:'DM Sans',sans-serif; outline:none; transition: border-color 0.2s;" onchange="handleLocationChange(this)">
+            <option value="" disabled selected>— Select Work Location —</option>
+            <optgroup label="🏢 Head Office">
+              <option value="Office">Office</option>
+              <option value="WFH">🏠 WFH</option>
+            </optgroup>
+            <optgroup label="📍 Client Sites">
+              {% for site in sites %}
+              <option value="{{ site }}">{{ site }}</option>
+              {% endfor %}
+            </optgroup>
+            <option value="__NEW__" style="color:var(--accent); font-weight:700;">➕ Add New Location...</option>
+          </select>
+          <!-- Geo-fence live status indicator (only shown for employees) -->
+          {% if session.get('role') == 'employee' %}
+          <div id="geoStatusBox" style="margin-top:10px; display:none; border-radius:10px; padding:10px 14px; font-size:13px; font-weight:600; display:flex; align-items:center; gap:8px;">
+            <span id="geoStatusIcon">📍</span>
+            <span id="geoStatusText">Checking your location...</span>
+          </div>
+          {% endif %}
+        </div>
+
+      </div>
+
+      <!-- Notes Field -->
+      <div style="margin-bottom: 20px;">
+        <label for="manual_notes" style="display:block; font-size:11px; font-weight:600; color:var(--muted); text-transform:uppercase; letter-spacing:1px; margin-bottom:10px;">Optional Notes / Comments</label>
+        <input type="text" id="manual_notes" name="notes" placeholder="e.g. Any specific details or comments (Required for Half Day)" style="width:100%; padding:11px 14px; font-size:14px; background: rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.05); border-radius: 10px; color: var(--text); outline:none; transition: all 0.25s;">
+      </div>
+
+      <!-- Submit Button -->
+      <div style="display: flex; justify-content: flex-end;">
+        <button type="submit" id="btn_submit_manual" class="btn-submit" style="display:inline-flex; align-items:center; gap:8px; padding:12px 24px; border-radius:10px; font-size:14px; font-weight:700; cursor:pointer; border:none; text-decoration:none; background:linear-gradient(135deg, var(--accent), #00b896); color:#000; box-shadow:0 8px 24px rgba(0,212,170,0.2); font-family:'Syne',sans-serif; transition:all 0.25s;">
+          💾 Submit Attendance
+        </button>
+      </div>
+
+    </form>
+  </div>
+
+  <style>
+    /* Premium Hover effect for radio buttons */
+    .status-option-label:hover {
+      background: rgba(255, 255, 255, 0.08) !important;
+      border-color: rgba(255, 255, 255, 0.15) !important;
+      transform: translateY(-1px);
+    }
+    .status-option-label:has(input:checked) {
+      background: rgba(0, 212, 170, 0.08) !important;
+      border-color: rgba(0, 212, 170, 0.3) !important;
+    }
+    .btn-submit:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 12px 32px rgba(0, 212, 170, 0.45) !important;
+    }
+    .btn-submit:active {
+      transform: translateY(0);
+    }
+  </style>
+
+  <script>
+    function updateNotesField(status) {
+      const notesEl = document.getElementById('manual_notes');
+      const locationEl = document.getElementById('manual_location');
+      
+      if (notesEl) {
+        if (status === 'Half Day') {
+          notesEl.required = true;
+          notesEl.placeholder = 'Reason for half day... (Required)';
+          notesEl.style.background = 'rgba(139,92,246,0.08)';
+          notesEl.style.borderColor = 'rgba(139,92,246,0.3)';
+        } else {
+          notesEl.required = false;
+          notesEl.placeholder = 'e.g. Any specific details or comments (Required for Half Day)';
+          notesEl.style.background = 'rgba(0,0,0,0.2)';
+          notesEl.style.borderColor = 'rgba(255,255,255,0.05)';
+        }
+      }
+
+      if (locationEl) {
+        if (status === 'Absent') {
+          locationEl.disabled = true;
+          locationEl.required = false;
+          locationEl.value = '';
+          locationEl.style.opacity = '0.5';
+          locationEl.style.cursor = 'not-allowed';
+          locationEl.style.background = 'rgba(0,0,0,0.1)';
+          hideGeoStatus();
+        } else {
+          locationEl.disabled = false;
+          locationEl.required = true;
+          locationEl.style.opacity = '1';
+          locationEl.style.cursor = 'pointer';
+          locationEl.style.background = 'rgba(0,0,0,0.3)';
+        }
+      }
+    }
+
+    // ── Geo-fence Variables ─────────────────────────────────────────────────
+    const IS_EMPLOYEE = {{ 'true' if session.get('role') == 'employee' else 'false' }};
+    const GEO_SKIP_LOCS = ['WFH', ''];
+    let geoData = {};          // { siteName: { lat, lng, radius } }
+    let empLat  = null;
+    let empLng  = null;
+
+    // Load geo-fence data from server once on page load
+    if (IS_EMPLOYEE) {
+      fetch('/api/locations/geo')
+        .then(r => r.json())
+        .then(d => { geoData = d; })
+        .catch(() => { geoData = {}; });
+    }
+
+    function haversineDistance(lat1, lon1, lat2, lon2) {
+      const R = 6371000;
+      const phi1 = lat1 * Math.PI / 180, phi2 = lat2 * Math.PI / 180;
+      const dphi = (lat2 - lat1) * Math.PI / 180;
+      const dlam = (lon2 - lon1) * Math.PI / 180;
+      const a = Math.sin(dphi/2)**2 + Math.cos(phi1)*Math.cos(phi2)*Math.sin(dlam/2)**2;
+      return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+    }
+
+    function showGeoStatus(icon, text, color) {
+      const box  = document.getElementById('geoStatusBox');
+      const icn  = document.getElementById('geoStatusIcon');
+      const txt  = document.getElementById('geoStatusText');
+      if (!box) return;
+      box.style.display = 'flex';
+      box.style.background = `${color}18`;
+      box.style.border = `1px solid ${color}44`;
+      box.style.color = color;
+      icn.textContent = icon;
+      txt.textContent = text;
+    }
+
+    function hideGeoStatus() {
+      const box = document.getElementById('geoStatusBox');
+      if (box) box.style.display = 'none';
+    }
+
+    function runGeoCheck(siteName) {
+      if (!IS_EMPLOYEE || GEO_SKIP_LOCS.includes(siteName)) {
+        hideGeoStatus();
+        document.getElementById('geo_skip').value = 'no_coords';
+        return;
+      }
+
+      const siteGeo = geoData[siteName];
+      if (!siteGeo) {
+        // Site has no coordinates saved — skip check
+        hideGeoStatus();
+        document.getElementById('geo_skip').value = 'no_coords';
+        return;
+      }
+
+      // Site has coordinates — request GPS
+      document.getElementById('geo_skip').value = '';
+      showGeoStatus('📡', 'Getting your GPS location…', '#00d4aa');
+
+      if (!navigator.geolocation) {
+        showGeoStatus('❌', 'GPS not supported on this device.', '#ef4444');
+        return;
+      }
+
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          empLat = pos.coords.latitude;
+          empLng = pos.coords.longitude;
+          document.getElementById('emp_lat').value = empLat;
+          document.getElementById('emp_lng').value = empLng;
+
+          const dist   = haversineDistance(empLat, empLng, siteGeo.lat, siteGeo.lng);
+          const radius = siteGeo.radius;
+          const distM  = Math.round(dist);
+
+          if (dist <= radius) {
+            showGeoStatus('✅', `Within range — ${distM}m from "${siteName}" (allowed: ${radius}m)`, '#10b981');
+          } else {
+            showGeoStatus('🚫', `Too far — You are ${distM}m from "${siteName}". Must be within ${radius}m.`, '#ef4444');
+          }
+        },
+        (err) => {
+          showGeoStatus('⚠️', 'Location access denied. Attendance may be blocked. Please allow GPS.', '#f59e0b');
+          document.getElementById('emp_lat').value = '';
+          document.getElementById('emp_lng').value = '';
+        },
+        { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+      );
+    }
+
+    // Form submit — re-capture GPS fresh before submitting
+    document.getElementById('manualAttendanceForm').addEventListener('submit', function(e) {
+      const locationEl = document.getElementById('manual_location');
+      const siteName   = locationEl ? locationEl.value : '';
+
+      // Always disable button to prevent double submit
+      const btn = document.getElementById('btn_submit_manual');
+      if (btn) {
+        btn.textContent = 'Verifying…';
+        btn.disabled = true;
+        btn.style.opacity = '.7';
+      }
+
+      if (!IS_EMPLOYEE || GEO_SKIP_LOCS.includes(siteName) || !geoData[siteName]) {
+        // No geo-check needed — submit immediately
+        return;
+      }
+
+      // Need live GPS before submit — prevent default and re-check
+      e.preventDefault();
+
+      showGeoStatus('📡', 'Verifying GPS before submitting…', '#00d4aa');
+
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          document.getElementById('emp_lat').value = pos.coords.latitude;
+          document.getElementById('emp_lng').value = pos.coords.longitude;
+          // Now truly submit
+          e.target.submit();
+        },
+        () => {
+          // GPS denied — let server decide
+          document.getElementById('emp_lat').value = '';
+          document.getElementById('emp_lng').value = '';
+          e.target.submit();
+        },
+        { enableHighAccuracy: true, timeout: 8000, maximumAge: 0 }
+      );
+    });
+
+    function handleLocationChange(selectEl) {
+      const val = selectEl.value;
+
+      if (val === '__NEW__') {
+        const newLocName = prompt("Enter new location name:");
+        if (newLocName && newLocName.trim() !== "") {
+          const trimmed = newLocName.trim();
+          fetch('/api/locations/add', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ name: trimmed })
+          })
+          .then(res => res.json())
+          .then(data => {
+            if (data.success) {
+              document.querySelectorAll('.location-select').forEach(el => {
+                let optgroup = el.querySelector('optgroup[label="📍 Client Sites"]');
+                let optionExists = false;
+                for (let option of el.options) {
+                  if (option.value === data.name) { optionExists = true; break; }
+                }
+                if (!optionExists) {
+                  const newOpt = document.createElement('option');
+                  newOpt.value = data.name;
+                  newOpt.textContent = data.name;
+                  if (optgroup) optgroup.appendChild(newOpt);
+                  else el.insertBefore(newOpt, el.lastElementChild);
+                }
+              });
+              selectEl.value = data.name;
+              runGeoCheck(data.name);
+            } else {
+              alert("Error: " + (data.error || "Could not add location"));
+              selectEl.value = "";
+              hideGeoStatus();
+            }
+          })
+          .catch(err => {
+            console.error(err);
+            alert("Error adding location. Please try again.");
+            selectEl.value = "";
+            hideGeoStatus();
+          });
+        } else {
+          selectEl.value = "";
+          hideGeoStatus();
+        }
+        return;
+      }
+
+      runGeoCheck(val);
+    }
+  </script>
+  {% endif %}
+
+  <!-- Stats Row -->
+  <div class="stats-grid">
+    <div class="stat-card">
+      <div class="stat-icon" style="background: rgba(59,130,246,0.1);">📊</div>
+      <div>
+        <div class="stat-label">Total Records</div>
+        <div class="stat-value">{{ records|length }}</div>
+      </div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon" style="background: rgba(16,185,129,0.1);">✅</div>
+      <div>
+        <div class="stat-label">Present Days</div>
+        <div class="stat-value" style="color: var(--present);">{{ present_count }}</div>
+      </div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon" style="background: rgba(239,68,68,0.1);">❌</div>
+      <div>
+        <div class="stat-label">Absent Days</div>
+        <div class="stat-value" style="color: var(--absent);">{{ absent_count }}</div>
+      </div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon" style="background: rgba(139,92,246,0.1);">🕐</div>
+      <div>
+        <div class="stat-label">Half Days</div>
+        <div class="stat-value" style="color: var(--halfday);">{{ halfday_count }}</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Attendance History Table -->
+  <div class="card">
+    <div class="card-title">📅 Attendance History <span style="color:var(--muted); font-size:13px; font-weight:400;">(Last 60 records)</span></div>
+    {% if records %}
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Date</th>
+            <th>Status</th>
+            <th>Location</th>
+            <th>Marked By</th>
+            <th>Notes</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for rec in records %}
+          <tr>
+            <td>
+              <strong>{{ rec.date.strftime('%d %b %Y') }}</strong>
+              {% if rec.date.isoformat() == today %}
+              <span style="font-size:10px; background:rgba(0,212,170,0.1); color:var(--accent); border:1px solid rgba(0,212,170,0.2); padding: 2px 7px; border-radius: 10px; margin-left: 6px;">Today</span>
+              {% endif %}
+            </td>
+            <td>
+              {% if rec.status == 'Present' %}
+              <span class="badge badge-present">✓ Present</span>
+              {% elif rec.status == 'Absent' %}
+              <span class="badge badge-absent">✗ Absent</span>
+              {% else %}
+              <span class="badge badge-halfday">½ Half Day</span>
+              {% endif %}
+            </td>
+            <td style="color: var(--text); font-size: 13px;">
+              {% if rec.location %}
+                {% if rec.location == 'WFH' %}
+                <span style="background:rgba(139,92,246,0.1); color:#8b5cf6; border:1px solid rgba(139,92,246,0.2); padding: 3px 10px; border-radius: 20px; font-size:12px; font-weight:600;">🏠 WFH</span>
+                {% elif rec.location == 'Office' %}
+                <span style="background:rgba(59,130,246,0.1); color:#3b82f6; border:1px solid rgba(59,130,246,0.2); padding: 3px 10px; border-radius: 20px; font-size:12px; font-weight:600;">🏢 Office</span>
+                {% else %}
+                <span style="background:rgba(0,212,170,0.1); color:var(--accent); border:1px solid rgba(0,212,170,0.2); padding: 3px 10px; border-radius: 20px; font-size:12px; font-weight:600;">📍 {{ rec.location }}</span>
+                {% endif %}
+              {% else %}
+              <span style="color:var(--muted); font-size:12px;">—</span>
+              {% endif %}
+            </td>
+            <td style="color: var(--muted); font-size: 12px;">{{ rec.marked_by or '—' }}</td>
+            <td style="color: var(--muted); font-size: 13px;">{{ rec.notes or '—' }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <div class="empty-state">
+      <span class="icon">📭</span>
+      <h3>No Attendance Records Yet</h3>
+      <p>Your attendance history will appear here<br>once it has been recorded by your admin.</p>
+    </div>
+    {% endif %}
+  </div>
+
+  {% else %}
+  <!-- Not linked to employee -->
+  <div class="card">
+    <div class="empty-state">
+      <span class="icon">🔗</span>
+      <h3>Account Not Linked</h3>
+      <p>Your user account is not linked to an employee record.<br>
+         Please contact your admin to link your account in <strong>User Management</strong>.</p>
+    </div>
+  </div>
+  {% endif %}
+
+</div>
+<script>
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('/sw.js')
+        .then(reg => console.log('Service Worker registered successfully!', reg.scope))
+        .catch(err => console.log('Service Worker registration failed:', err));
+    });
+  }
+</script>
+</body>
+</html>

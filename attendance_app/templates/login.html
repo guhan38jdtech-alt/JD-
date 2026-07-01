@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sign In — JD TECH Attendance System</title>
+  
+  <!-- Premium Modern Typography -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&family=Syne:wght@700;800&display=swap" rel="stylesheet">
+  
+  <!-- Main Stylesheet -->
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/login.css') }}">
+  <link rel="manifest" href="/manifest.json">
+</head>
+<body>
+
+  <!-- Animated Ambient Aurora Blobs -->
+  <div class="ambient-glow">
+    <div class="blob blob-1"></div>
+    <div class="blob blob-2"></div>
+    <div class="blob blob-3"></div>
+  </div>
+  
+  <!-- Digital Noise Grain Overlay -->
+  <div class="noise-overlay"></div>
+  
+  <!-- Gigantic Background Watermark -->
+  <div class="bg-watermark">JD TECH</div>
+
+  <main class="login-container">
+    <!-- Brand / Product Marketing Section (Left Pane) -->
+    <section class="brand-panel">
+      <div class="brand-header">
+        <div class="logo-wrapper">
+          <img src="{{ url_for('static', filename='logo.jpg') }}" alt="JD TECH Logo" class="brand-logo">
+        </div>
+        
+        <!-- Live Ticking Clock & Date Card -->
+        <div class="clock-card">
+          <span id="liveClock" class="clock-time">--:--:-- --</span>
+          <span id="liveDate" class="clock-date">-- --- ----</span>
+        </div>
+      </div>
+
+      <div class="brand-body">
+        <div class="brand-badge">JD TECH ENTERPRISE</div>
+        <h2 class="brand-title">Track. Manage.<br>Report.</h2>
+        <p class="brand-description">A professional attendance tracking system engineered for modern industrial workflows and payroll intelligence.</p>
+        
+        <div class="feature-list">
+          <div class="feature-item">
+            <svg class="feature-icon" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+            <span>Real-time presence monitoring</span>
+          </div>
+          <div class="feature-item">
+            <svg class="feature-icon" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+            <span>Multi-site location tracking</span>
+          </div>
+          <div class="feature-item">
+            <svg class="feature-icon" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+            <span>Automated PDF & XLSX exports</span>
+          </div>
+          <div class="feature-item">
+            <svg class="feature-icon" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+            <span>Secure Role-Based access portal</span>
+          </div>
+        </div>
+
+        <!-- Dynamic Floating Quotes Panel -->
+        <div id="quotePanel" class="quote-panel">
+          <p id="quoteText" class="quote-text"></p>
+          <span id="quoteAuthor" class="quote-author"></span>
+        </div>
+      </div>
+
+      <div class="brand-footer">
+        <div class="system-status">
+          <span class="status-indicator-dot"></span>
+          <span class="status-label">Enterprise Server Connected</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- Interactive Access Portal Section (Right Pane) -->
+    <section class="form-panel">
+      <div class="form-header">
+        <h3 class="form-title">Access Portal</h3>
+        <p class="form-subtitle">Authenticate to access your workspace dashboard.</p>
+      </div>
+
+      <!-- Flash Message Warnings -->
+      {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+          {% for cat, msg in messages %}
+            <div class="alert-banner">
+              <svg class="alert-icon" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+              <span class="alert-message">{{ msg }}</span>
+            </div>
+          {% endfor %}
+        {% endif %}
+      {% endwith %}
+
+      <form method="POST" class="auth-form">
+        <!-- Username input -->
+        <div class="input-group">
+          <label for="username">Username</label>
+          <div class="field-container">
+            <span class="field-icon">
+              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+            </span>
+            <input id="username" name="username" type="text" placeholder="Enter username" required autofocus autocomplete="username">
+          </div>
+        </div>
+
+        <!-- Password input with reveal toggle -->
+        <div class="input-group">
+          <label for="password">Password</label>
+          <div class="field-container">
+            <span class="field-icon">
+              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+            </span>
+            <input id="password" name="password" type="password" placeholder="Enter password" required autocomplete="current-password">
+            <button id="passwordToggleBtn" type="button" class="btn-reveal-toggle" aria-label="Show password" onclick="togglePasswordVisibility()">
+              <svg id="eye-icon" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+            </button>
+          </div>
+        </div>
+
+        <button type="submit" class="btn-primary">
+          <span>Sign In</span>
+          <svg class="btn-arrow" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+        </button>
+      </form>
+
+
+    </section>
+  </main>
+
+  <!-- Mobile Access Portal Modal -->
+  <div id="mobileModal" class="modal-overlay" onclick="closeMobileModal(event)">
+    <div class="modal-card" onclick="event.stopPropagation()">
+      <button class="modal-close" onclick="closeMobileModal(event)" aria-label="Close modal">&times;</button>
+      
+      <div class="modal-header">
+        <div class="modal-icon-container">
+          <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="2" width="14" height="20" rx="2" ry="2"></rect><line x1="12" y1="18" x2="12.01" y2="18"></line></svg>
+        </div>
+        <h3 class="modal-title">Mobile Access Portal</h3>
+        <p class="modal-subtitle">Quickly log attendance on site using your personal mobile device.</p>
+      </div>
+
+      <div class="modal-body">
+        {% if public_url %}
+        <!-- Premium Segmented Tab Control -->
+        <div class="segmented-control">
+          <div class="slider-capsule"></div>
+          <button id="tabLocal" type="button" class="tab-btn" onclick="switchAccessTab('local')">
+            📡 Same Wi-Fi Link
+          </button>
+          <button id="tabPublic" type="button" class="tab-btn active" onclick="switchAccessTab('public')">
+            🌍 Public Internet
+          </button>
+        </div>
+        {% endif %}
+
+        <!-- QR Code Card Container -->
+        <div class="qr-card">
+          <div class="qr-glow-effect"></div>
+          <img id="qrCodeImg" src="https://api.qrserver.com/v1/create-qr-code/?size=180x180&data={{ network_url | urlencode }}&color=00d4aa&bgcolor=111827" alt="Scan to open mobile portal" class="qr-image">
+        </div>
+        
+        <!-- Step-by-Step Instructions -->
+        <div class="instructions-card">
+          <div class="instruction-step">
+            <span class="step-badge">1</span>
+            <p class="step-desc" id="stepOneText">{% if public_url %}Use cellular mobile data or any external Wi-Fi connection.{% else %}Connect your phone to the same local Wi-Fi / office network.{% endif %}</p>
+          </div>
+          <div class="instruction-step">
+            <span class="step-badge">2</span>
+            <p class="step-desc">Open your phone's camera app and scan the QR code above.</p>
+          </div>
+          <div class="instruction-step">
+            <span class="step-badge">3</span>
+            <p class="step-desc">Access the portal instantly, or manually enter the link below.</p>
+          </div>
+        </div>
+
+        <!-- URL Link Copy Component -->
+        <div class="url-copier">
+          <span id="mobileLinkText" class="url-text">{{ network_url }}</span>
+          <button id="btnCopy" class="btn-copy" onclick="copyMobileLink()">
+            <span id="copyIcon">📋</span>
+            <span id="copyText">Copy</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Client-side Logic Script -->
+  <script>
+    // Motivational Quotes Pool for the Sidebar
+    const quotes = [
+      { text: "Success is not final, failure is not fatal: it is the courage to continue that counts.", author: "Winston Churchill" },
+      { text: "The secret of getting ahead is getting started.", author: "Mark Twain" },
+      { text: "Believe you can and you're halfway there.", author: "Theodore Roosevelt" },
+      { text: "Your attitude determines your direction.", author: "Unknown Author" },
+      { text: "Discipline is the bridge between goals and accomplishment.", author: "Jim Rohn" },
+      { text: "Small daily improvements over time lead to stunning results.", author: "Robin Sharma" },
+      { text: "Great things never come from comfort zones.", author: "Unknown Author" },
+      { text: "Every morning you have two choices: continue to sleep or wake up and chase your dreams.", author: "Unknown Author" }
+    ];
+    
+    let quoteIndex = 0;
+    
+    function rotateQuote() {
+      const textEl = document.getElementById('quoteText');
+      const authorEl = document.getElementById('quoteAuthor');
+      if (!textEl || !authorEl) return;
+      
+      textEl.style.opacity = '0';
+      authorEl.style.opacity = '0';
+      
+      setTimeout(() => {
+        textEl.textContent = `"${quotes[quoteIndex].text}"`;
+        authorEl.textContent = `— ${quotes[quoteIndex].author}`;
+        textEl.style.opacity = '1';
+        authorEl.style.opacity = '1';
+        quoteIndex = (quoteIndex + 1) % quotes.length;
+      }, 500);
+    }
+    
+    // Start Quote Rotation
+    rotateQuote();
+    setInterval(rotateQuote, 7000);
+
+    // Live Ticking Clock and Date Formatter
+    function runLiveClock() {
+      const clockEl = document.getElementById('liveClock');
+      const dateEl = document.getElementById('liveDate');
+      if (!clockEl || !dateEl) return;
+
+      const now = new Date();
+      let hours = now.getHours();
+      const minutes = String(now.getMinutes()).padStart(2, '0');
+      const seconds = String(now.getSeconds()).padStart(2, '0');
+      const ampm = hours >= 12 ? 'PM' : 'AM';
+      hours = hours % 12;
+      hours = hours ? hours : 12; // 0 hour should be 12
+      const timeStr = `${String(hours).padStart(2, '0')}:${minutes}:${seconds} ${ampm}`;
+
+      const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+      const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+      const dayName = days[now.getDay()];
+      const dayNum = now.getDate();
+      const monthName = months[now.getMonth()];
+      const year = now.getFullYear();
+      const dateStr = `${dayName.substring(0, 3)}, ${dayNum} ${monthName} ${year}`;
+
+      clockEl.textContent = timeStr;
+      dateEl.textContent = dateStr;
+    }
+    
+    setInterval(runLiveClock, 1000);
+    runLiveClock();
+
+    // Password Visibility Toggle
+    function togglePasswordVisibility() {
+      const passwordInput = document.getElementById('password');
+      const toggleBtn = document.getElementById('passwordToggleBtn');
+      const eyeIcon = document.getElementById('eye-icon');
+      
+      if (!passwordInput || !eyeIcon) return;
+      
+      if (passwordInput.type === 'password') {
+        passwordInput.type = 'text';
+        toggleBtn.setAttribute('aria-label', 'Hide password');
+        // SVG Eye Off Icon
+        eyeIcon.innerHTML = `<path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path><line x1="1" y1="1" x2="23" y2="23"></line>`;
+      } else {
+        passwordInput.type = 'password';
+        toggleBtn.setAttribute('aria-label', 'Show password');
+        // SVG Eye Open Icon
+        eyeIcon.innerHTML = `<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle>`;
+      }
+    }
+
+    // Modal Control Logic
+    function openMobileModal() {
+      const modal = document.getElementById('mobileModal');
+      if (modal) modal.classList.add('active');
+    }
+
+    function closeMobileModal(event) {
+      const modal = document.getElementById('mobileModal');
+      if (modal) modal.classList.remove('active');
+    }
+
+    // Network Tab Switching Configurations
+    const localUrl = "http://{{ local_ip }}:5001";
+    const publicUrl = "{{ public_url or '' }}";
+    let activeUrl = publicUrl ? publicUrl : localUrl;
+
+    function switchAccessTab(type) {
+      const tabLocal = document.getElementById('tabLocal');
+      const tabPublic = document.getElementById('tabPublic');
+      const qrImg = document.getElementById('qrCodeImg');
+      const linkText = document.getElementById('mobileLinkText');
+      const stepOne = document.getElementById('stepOneText');
+      const capsule = document.querySelector('.slider-capsule');
+      
+      if (!qrImg || !linkText) return;
+
+      if (type === 'local') {
+        if (tabLocal) tabLocal.classList.add('active');
+        if (tabPublic) tabPublic.classList.remove('active');
+        if (capsule) capsule.style.transform = 'translateX(0)';
+        if (stepOne) stepOne.textContent = 'Connect your phone to the same local Wi-Fi / office network.';
+        activeUrl = localUrl;
+      } else {
+        if (tabPublic) tabPublic.classList.add('active');
+        if (tabLocal) tabLocal.classList.remove('active');
+        if (capsule) capsule.style.transform = 'translateX(100%)';
+        if (stepOne) stepOne.textContent = 'Use cellular mobile data or any external Wi-Fi connection.';
+        activeUrl = publicUrl;
+      }
+      
+      qrImg.src = `https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(activeUrl)}&color=00d4aa&bgcolor=111827`;
+      linkText.textContent = activeUrl;
+    }
+
+    // Copy Link Clipboard Action
+    function copyMobileLink() {
+      const linkText = document.getElementById('mobileLinkText').textContent;
+      navigator.clipboard.writeText(linkText).then(() => {
+        const copyTextEl = document.getElementById('copyText');
+        const copyIconEl = document.getElementById('copyIcon');
+        const btn = document.getElementById('btnCopy');
+        
+        if (copyTextEl && copyIconEl && btn) {
+          copyTextEl.textContent = 'Copied!';
+          copyIconEl.textContent = '✓';
+          btn.classList.add('copied');
+          
+          setTimeout(() => {
+            copyTextEl.textContent = 'Copy';
+            copyIconEl.textContent = '📋';
+            btn.classList.remove('copied');
+          }, 2000);
+        }
+      }).catch(err => {
+        console.error('Failed to copy to clipboard: ', err);
+      });
+    }
+
+    // Register PWA Service Worker
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/sw.js')
+          .then(reg => console.log('Service Worker registered successfully!', reg.scope))
+          .catch(err => console.log('Service Worker registration failed:', err));
+      });
+    }
+  </script>
+</body>
+</html>

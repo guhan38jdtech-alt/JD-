@@ -1,0 +1,78 @@
+{% extends 'base.html' %}
+{% block title %}Add Employee — JD TECH{% endblock %}
+{% block page_title %}Add Employee{% endblock %}
+{% block page_subtitle %}Register a new employee{% endblock %}
+
+{% block content %}
+<div style="max-width:600px;">
+  <div class="card">
+    <form method="POST">
+      <div class="grid grid-2">
+        <div class="form-group">
+          <label for="emp_id">Employee ID</label>
+          <input id="emp_id" name="employee_id" placeholder="e.g. EMP006" required>
+        </div>
+        <div class="form-group">
+          <label for="emp_name">Full Name</label>
+          <input id="emp_name" name="full_name" placeholder="Full name" required>
+        </div>
+      </div>
+      <div class="grid grid-2">
+        <div class="form-group">
+          <label for="emp_dept">Department</label>
+          <select id="emp_dept" name="department" required>
+            <option value="">Select Department</option>
+            <option>Engineering</option>
+            <option>HR</option>
+            <option>Finance</option>
+            <option>Marketing</option>
+            <option>Sales</option>
+            <option>Operations</option>
+            <option>IT</option>
+            <option>Legal</option>
+            <option>General</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="emp_position">Position / Role</label>
+          <input id="emp_position" name="position" placeholder="Job title">
+        </div>
+      </div>
+      <div class="grid grid-2">
+        <div class="form-group">
+          <label for="emp_email">Email</label>
+          <input id="emp_email" name="email" type="email" placeholder="email@company.com">
+        </div>
+        <div class="form-group">
+          <label for="emp_phone">Phone</label>
+          <input id="emp_phone" name="phone" placeholder="Mobile number">
+        </div>
+      </div>
+      <div class="form-group">
+        <label for="emp_join_date">Join Date</label>
+        <input id="emp_join_date" name="join_date" type="date">
+      </div>
+      
+      <style>
+      @media (max-width: 768px) {
+        .btn-group {
+          flex-direction: column !important;
+          align-items: stretch !important;
+          gap: 10px !important;
+        }
+        .btn-group button, 
+        .btn-group a {
+          width: 100% !important;
+          justify-content: center !important;
+        }
+      }
+      </style>
+      
+      <div class="btn-group" style="display:flex; gap:12px; margin-top:8px;">
+        <button type="submit" class="btn btn-primary">Add Employee</button>
+        <a href="{{ url_for('employees') }}" class="btn btn-secondary">Cancel</a>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

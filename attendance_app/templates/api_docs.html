@@ -1,0 +1,1510 @@
+{% extends 'base.html' %}
+
+{% block title %}API Portal - JD TECH{% endblock %}
+
+{% block page_title %}API Developer Portal{% endblock %}
+{% block page_subtitle %}Interactive developer documentation, sandbox client and API references{% endblock %}
+
+{% block content %}
+<style>
+  /* API Portal Core Styles */
+  .api-container {
+    display: grid;
+    grid-template-columns: 260px 1fr;
+    gap: 30px;
+    margin-top: 10px;
+  }
+  
+  .api-nav-card {
+    position: sticky;
+    top: 20px;
+    height: fit-content;
+  }
+  
+  .api-nav-list {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    list-style: none;
+    margin-top: 10px;
+  }
+  
+  .api-nav-link {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 14px;
+    border-radius: 8px;
+    color: var(--muted);
+    text-decoration: none;
+    font-size: 13px;
+    font-weight: 500;
+    transition: all 0.2s;
+  }
+  
+  .api-nav-link:hover {
+    color: var(--text);
+    background: rgba(255, 255, 255, 0.03);
+  }
+  
+  .api-nav-link.active {
+    color: var(--accent);
+    background: rgba(0, 212, 170, 0.08);
+    font-weight: 600;
+  }
+  
+  .api-section {
+    margin-bottom: 40px;
+    scroll-margin-top: 20px;
+  }
+  
+  .api-section-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 20px;
+    font-weight: 700;
+    margin-bottom: 12px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--border);
+    color: var(--text);
+  }
+  
+  .api-intro-text {
+    font-size: 14px;
+    line-height: 1.6;
+    color: #a0aec0;
+    margin-bottom: 16px;
+  }
+
+  /* Master Token Generator Card */
+  .token-box {
+    background: linear-gradient(135deg, rgba(17, 24, 39, 0.8), rgba(26, 34, 53, 0.5));
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 20px;
+    margin-bottom: 25px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+  }
+  
+  .token-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 14px;
+  }
+  
+  .token-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--accent);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  
+  .token-input-group {
+    display: flex;
+    gap: 12px;
+    margin-top: 10px;
+  }
+  
+  .token-display-box {
+    margin-top: 14px;
+    background: #090d16;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 12px 14px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+  }
+  
+  .token-str {
+    font-family: 'Courier New', Courier, monospace;
+    font-size: 12px;
+    color: var(--accent2);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    user-select: all;
+  }
+
+  /* Endpoint Accordion and Styles */
+  .endpoint-card {
+    background: rgba(17, 24, 39, 0.7);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    margin-bottom: 16px;
+    overflow: hidden;
+    transition: border-color 0.25s ease;
+  }
+  
+  .endpoint-card:hover {
+    border-color: rgba(0, 212, 170, 0.3);
+  }
+  
+  .endpoint-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 20px;
+    cursor: pointer;
+    user-select: none;
+    background: rgba(26, 34, 53, 0.2);
+  }
+  
+  .endpoint-meta {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex: 1;
+    min-width: 0;
+  }
+  
+  .method-badge {
+    font-family: 'Syne', sans-serif;
+    font-size: 10px;
+    font-weight: 800;
+    padding: 4px 10px;
+    border-radius: 6px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    text-align: center;
+    width: 70px;
+  }
+  
+  .method-get {
+    background: rgba(16, 185, 129, 0.12);
+    color: #10b981;
+    border: 1px solid rgba(16, 185, 129, 0.3);
+  }
+  
+  .method-post {
+    background: rgba(59, 130, 246, 0.12);
+    color: #3b82f6;
+    border: 1px solid rgba(59, 130, 246, 0.3);
+  }
+  
+  .method-delete {
+    background: rgba(239, 68, 68, 0.12);
+    color: #ef4444;
+    border: 1px solid rgba(239, 68, 68, 0.3);
+  }
+  
+  .endpoint-path {
+    font-family: 'Courier New', Courier, monospace;
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--text);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  
+  .endpoint-desc {
+    font-size: 12px;
+    color: var(--muted);
+  }
+  
+  .endpoint-chevron {
+    font-size: 14px;
+    color: var(--muted);
+    transition: transform 0.25s ease;
+    margin-left: 15px;
+  }
+  
+  .endpoint-card.active .endpoint-chevron {
+    transform: rotate(180deg);
+  }
+  
+  .endpoint-content {
+    display: none;
+    padding: 24px 20px;
+    border-top: 1px solid var(--border);
+    background: rgba(10, 14, 26, 0.4);
+  }
+  
+  .endpoint-card.active .endpoint-content {
+    display: block;
+  }
+
+  /* Grid Layout inside Endpoints Details */
+  .endpoint-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+  }
+  
+  @media (max-width: 1024px) {
+    .endpoint-grid {
+      grid-template-columns: 1fr;
+    }
+    .api-container {
+      grid-template-columns: 1fr;
+    }
+    .api-nav-card {
+      display: none;
+    }
+  }
+  
+  /* Details Section Headers */
+  .details-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 13px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--muted);
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  
+  /* Parameters Table */
+  .param-table {
+    width: 100%;
+    margin-bottom: 20px;
+  }
+  
+  .param-row {
+    border-bottom: 1px solid rgba(31, 45, 69, 0.4);
+  }
+  
+  .param-name {
+    font-family: 'Courier New', Courier, monospace;
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--accent);
+    padding: 8px 0;
+  }
+  
+  .param-type {
+    font-size: 11px;
+    color: var(--muted);
+    font-style: italic;
+  }
+  
+  .param-required {
+    color: var(--danger);
+    font-weight: 700;
+    font-size: 10px;
+    background: rgba(239, 68, 68, 0.08);
+    padding: 1px 4px;
+    border-radius: 4px;
+    margin-left: 4px;
+  }
+  
+  .param-desc {
+    font-size: 12px;
+    color: #a0aec0;
+    padding: 8px 0 8px 10px;
+  }
+
+  /* Code Snippets & JSON editors */
+  .snippet-tabs {
+    display: flex;
+    background: #090d16;
+    border: 1px solid var(--border);
+    border-radius: 8px 8px 0 0;
+    padding: 4px 6px;
+    gap: 4px;
+  }
+  
+  .snippet-tab {
+    background: transparent;
+    border: none;
+    color: var(--muted);
+    font-size: 11px;
+    font-weight: 600;
+    padding: 6px 12px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  
+  .snippet-tab:hover {
+    color: var(--text);
+  }
+  
+  .snippet-tab.active {
+    color: var(--accent);
+    background: var(--surface2);
+  }
+  
+  .code-block-wrapper {
+    position: relative;
+  }
+  
+  .code-pre {
+    background: #050810;
+    border: 1px solid var(--border);
+    border-top: none;
+    border-radius: 0 0 8px 8px;
+    padding: 14px;
+    font-family: 'Courier New', Courier, monospace;
+    font-size: 11.5px;
+    line-height: 1.5;
+    color: #e2e8f0;
+    overflow-x: auto;
+    max-height: 280px;
+  }
+  
+  .btn-copy-snippet {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    color: var(--muted);
+    padding: 4px 8px;
+    font-size: 10px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  
+  .btn-copy-snippet:hover {
+    color: var(--accent);
+    background: rgba(0, 212, 170, 0.08);
+  }
+
+  /* Sandbox Interactive Console */
+  .sandbox-panel {
+    background: rgba(13, 19, 33, 0.5);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 16px;
+    margin-top: 20px;
+  }
+  
+  .sandbox-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+  }
+  
+  .sandbox-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--text);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  
+  .sandbox-inputs {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-bottom: 14px;
+  }
+  
+  .sandbox-input-row {
+    display: grid;
+    grid-template-columns: 140px 1fr;
+    align-items: center;
+    gap: 12px;
+  }
+  
+  .sandbox-input-label {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  
+  .sandbox-input {
+    padding: 8px 12px;
+    font-size: 12px;
+  }
+  
+  .sandbox-textarea {
+    font-family: 'Courier New', Courier, monospace;
+    font-size: 12px;
+    height: 100px;
+    resize: vertical;
+    background: #090d16;
+  }
+  
+  .console-response {
+    margin-top: 14px;
+    display: none;
+  }
+  
+  .console-meta {
+    display: flex;
+    justify-content: space-between;
+    background: #0d1321;
+    border: 1px solid var(--border);
+    border-bottom: none;
+    border-radius: 8px 8px 0 0;
+    padding: 6px 12px;
+    font-size: 11px;
+    font-weight: 600;
+  }
+  
+  .status-pill {
+    padding: 2px 6px;
+    border-radius: 4px;
+  }
+  
+  .status-success {
+    background: rgba(16, 185, 129, 0.15);
+    color: #10b981;
+  }
+  
+  .status-error {
+    background: rgba(239, 68, 68, 0.15);
+    color: #ef4444;
+  }
+</style>
+
+<div class="api-container">
+  <!-- Left Side: Sticky Outline Navigation -->
+  <div class="api-nav-card card">
+    <div class="card-title">📖 API Contents</div>
+    <ul class="api-nav-list">
+      <li><a href="#intro" class="api-nav-link active">🚀 Getting Started</a></li>
+      <li><a href="#auth" class="api-nav-link">🔐 Authentication</a></li>
+      <li><a href="#employees" class="api-nav-link">👥 Employee Directory</a></li>
+      <li><a href="#attendance" class="api-nav-link">📅 Attendance Records</a></li>
+      <li><a href="#locations" class="api-nav-link">📍 Office Locations</a></li>
+    </ul>
+  </div>
+
+  <!-- Right Side: Documentation & Interactive Console -->
+  <div>
+    <!-- Introduction Section -->
+    <section id="intro" class="api-section">
+      <h2 class="api-section-title">🚀 Getting Started</h2>
+      <p class="api-intro-text">
+        Welcome to the <strong>JD TECH Attendance System Developer API</strong>. This portal provides comprehensive JSON endpoints 
+        for integrating third-party systems, mobile client applications, SCADA platforms, and automation tools with the corporate 
+        attendance ledger.
+      </p>
+      <p class="api-intro-text">
+        All API requests are expected to send and receive standard <code>application/json</code> payloads unless specified otherwise. 
+        Requests must be authenticated either through active web session cookie context (for front-end integrations) or 
+        via an authorization Bearer token.
+      </p>
+    </section>
+
+    <!-- Authentication Token Generator Section -->
+    <section id="auth" class="api-section">
+      <h2 class="api-section-title">🔐 Token Authentication</h2>
+      <p class="api-intro-text">
+        The API employs secure, signed cryptographic tokens using the <code>URLSafeSerializer</code> schema. Standard integration 
+        tokens can be generated below by authenticating with your system credentials, or programmatically via the 
+        <code>POST /api/auth/login</code> endpoint.
+      </p>
+      
+      <!-- Interactive Authenticator Console -->
+      <div class="token-box">
+        <div class="token-header">
+          <div class="token-title">🔑 Sandbox Credential Manager</div>
+          <span class="badge badge-admin">STATELESS JWT</span>
+        </div>
+        <p class="api-intro-text" style="font-size:12.5px; margin-bottom:12px;">
+          Log in with your existing account credentials to obtain an API key/token. The token will be securely saved in your local 
+          browser session and automatically injected into the headers of all interactive API test console queries below.
+        </p>
+        
+        <div class="token-input-group">
+          <input type="text" id="authUsername" placeholder="Username" style="flex:1;" class="sandbox-input">
+          <input type="password" id="authPassword" placeholder="Password" style="flex:1;" class="sandbox-input">
+          <button class="btn btn-primary" onclick="generateToken()">Get Token</button>
+        </div>
+        
+        <div id="tokenDisplayWrapper" class="token-display-box" style="display: none;">
+          <div style="display: flex; flex-direction: column; gap: 2px; min-width: 0; flex: 1;">
+            <span style="font-size: 10px; font-weight: 700; color: var(--muted); text-transform: uppercase;">Active Bearer Token</span>
+            <span id="activeTokenStr" class="token-str">No active token</span>
+          </div>
+          <button class="btn btn-secondary btn-sm" onclick="copyToken()">📋 Copy</button>
+        </div>
+      </div>
+      
+      <!-- Login Endpoint Details -->
+      <div class="endpoint-card">
+        <div class="endpoint-header" onclick="toggleAccordion(this)">
+          <div class="endpoint-meta">
+            <span class="method-badge method-post">POST</span>
+            <span class="endpoint-path">/api/auth/login</span>
+            <span class="endpoint-desc">Request signed API token with user credentials</span>
+          </div>
+          <div class="endpoint-chevron">▼</div>
+        </div>
+        <div class="endpoint-content">
+          <div class="endpoint-grid">
+            <div>
+              <div class="details-title">📋 Payload Specification</div>
+              <table class="param-table">
+                <tr class="param-row">
+                  <td class="param-name">username<span class="param-required">*</span></td>
+                  <td class="param-type">string</td>
+                  <td class="param-desc">System username</td>
+                </tr>
+                <tr class="param-row">
+                  <td class="param-name">password<span class="param-required">*</span></td>
+                  <td class="param-type">string</td>
+                  <td class="param-desc">User account password</td>
+                </tr>
+              </table>
+            </div>
+            
+            <div>
+              <div class="details-title">💻 Code Snippet</div>
+              <div class="snippet-tabs">
+                <button class="snippet-tab active" onclick="switchSnippet(this, 'login', 'curl')">cURL</button>
+                <button class="snippet-tab" onclick="switchSnippet(this, 'login', 'js')">JS Fetch</button>
+                <button class="snippet-tab" onclick="switchSnippet(this, 'login', 'python')">Python</button>
+              </div>
+              <div class="code-block-wrapper">
+                <button class="btn-copy-snippet" onclick="copySnippetText(this)">Copy</button>
+                <pre class="code-pre"><code id="code-login-curl">curl -X POST {{ network_url }}/api/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"username": "admin", "password": "yourpassword"}'</code><code id="code-login-js" style="display:none;">fetch('{{ network_url }}/api/auth/login', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({ username: 'admin', password: 'yourpassword' })
+})
+.then(res => res.json())
+.then(data => console.log(data));</code><code id="code-login-python" style="display:none;">import requests
+
+url = "{{ network_url }}/api/auth/login"
+payload = {"username": "admin", "password": "yourpassword"}
+
+response = requests.post(url, json=payload)
+print(response.json())</code></pre>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Try it Out section -->
+          <div class="sandbox-panel">
+            <div class="sandbox-header">
+              <div class="sandbox-title">⚡ Interactive Sandbox Client</div>
+              <button class="btn btn-primary btn-sm" onclick="runSandboxRequest('login', '/api/auth/login', 'POST')">Send Request</button>
+            </div>
+            <div class="sandbox-inputs">
+              <div class="sandbox-input-row">
+                <span class="sandbox-input-label">Payload Body</span>
+                <textarea id="body-login" class="sandbox-input sandbox-textarea">{\n  "username": "admin",\n  "password": "admin123"\n}</textarea>
+              </div>
+            </div>
+            
+            <div id="response-login" class="console-response">
+              <div class="console-meta">
+                <span>Response Output</span>
+                <span id="response-status-login" class="status-pill status-success">HTTP 200</span>
+              </div>
+              <pre class="code-pre" style="border-radius:0 0 8px 8px; border-top:none;"><code id="response-body-login"></code></pre>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Employees Directory Section -->
+    <section id="employees" class="api-section">
+      <h2 class="api-section-title">👥 Employee Directory</h2>
+      <p class="api-intro-text">
+        These endpoints manage the company's active employees roster. Administrative roles can create or remove employee records 
+        directly. Regular employee accounts are allowed read-only queries of active directories.
+      </p>
+      
+      <!-- GET /api/employees -->
+      <div class="endpoint-card">
+        <div class="endpoint-header" onclick="toggleAccordion(this)">
+          <div class="endpoint-meta">
+            <span class="method-badge method-get">GET</span>
+            <span class="endpoint-path">/api/employees</span>
+            <span class="endpoint-desc">List active or inactive employees</span>
+          </div>
+          <div class="endpoint-chevron">▼</div>
+        </div>
+        <div class="endpoint-content">
+          <div class="endpoint-grid">
+            <div>
+              <div class="details-title">📋 Query Parameters</div>
+              <table class="param-table">
+                <tr class="param-row">
+                  <td class="param-name">active</td>
+                  <td class="param-type">string</td>
+                  <td class="param-desc">Optional. Filter by status: <code>true</code> or <code>false</code>.</td>
+                </tr>
+              </table>
+            </div>
+            
+            <div>
+              <div class="details-title">💻 Code Snippet</div>
+              <div class="snippet-tabs">
+                <button class="snippet-tab active" onclick="switchSnippet(this, 'get-employees', 'curl')">cURL</button>
+                <button class="snippet-tab" onclick="switchSnippet(this, 'get-employees', 'js')">JS Fetch</button>
+                <button class="snippet-tab" onclick="switchSnippet(this, 'get-employees', 'python')">Python</button>
+              </div>
+              <div class="code-block-wrapper">
+                <button class="btn-copy-snippet" onclick="copySnippetText(this)">Copy</button>
+                <pre class="code-pre"><code id="code-get-employees-curl">curl {{ network_url }}/api/employees?active=true \
+  -H "Authorization: Bearer YOUR_TOKEN"</code><code id="code-get-employees-js" style="display:none;">fetch('{{ network_url }}/api/employees?active=true', {
+  method: 'GET',
+  headers: { 'Authorization': 'Bearer YOUR_TOKEN' }
+})
+.then(res => res.json())
+.then(data => console.log(data));</code><code id="code-get-employees-python" style="display:none;">import requests
+
+url = "{{ network_url }}/api/employees"
+headers = {"Authorization": "Bearer YOUR_TOKEN"}
+params = {"active": "true"}
+
+response = requests.get(url, headers=headers, params=params)
+print(response.json())</code></pre>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Sandbox Panel -->
+          <div class="sandbox-panel">
+            <div class="sandbox-header">
+              <div class="sandbox-title">⚡ Interactive Sandbox Client</div>
+              <button class="btn btn-primary btn-sm" onclick="runSandboxRequest('get-employees', '/api/employees', 'GET')">Send Request</button>
+            </div>
+            <div class="sandbox-inputs">
+              <div class="sandbox-input-row">
+                <span class="sandbox-input-label">Filter (active)</span>
+                <input type="text" id="query-get-employees-active" class="sandbox-input" placeholder="true">
+              </div>
+            </div>
+            
+            <div id="response-get-employees" class="console-response">
+              <div class="console-meta">
+                <span>Response Output</span>
+                <span id="response-status-get-employees" class="status-pill status-success">HTTP 200</span>
+              </div>
+              <pre class="code-pre" style="border-radius:0 0 8px 8px; border-top:none;"><code id="response-body-get-employees"></code></pre>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- POST /api/employees -->
+      <div class="endpoint-card">
+        <div class="endpoint-header" onclick="toggleAccordion(this)">
+          <div class="endpoint-meta">
+            <span class="method-badge method-post">POST</span>
+            <span class="endpoint-path">/api/employees</span>
+            <span class="endpoint-desc">Add a new employee to the database</span>
+          </div>
+          <div class="endpoint-chevron">▼</div>
+        </div>
+        <div class="endpoint-content">
+          <div class="endpoint-grid">
+            <div>
+              <div class="details-title">📋 Payload Specification</div>
+              <table class="param-table">
+                <tr class="param-row">
+                  <td class="param-name">employee_id<span class="param-required">*</span></td>
+                  <td class="param-type">string</td>
+                  <td class="param-desc">Unique identifier (e.g. EMP027)</td>
+                </tr>
+                <tr class="param-row">
+                  <td class="param-name">full_name<span class="param-required">*</span></td>
+                  <td class="param-type">string</td>
+                  <td class="param-desc">Employee full name</td>
+                </tr>
+                <tr class="param-row">
+                  <td class="param-name">department<span class="param-required">*</span></td>
+                  <td class="param-type">string</td>
+                  <td class="param-desc">Department (e.g. SCADA, PLC, IT)</td>
+                </tr>
+                <tr class="param-row">
+                  <td class="param-name">position</td>
+                  <td class="param-type">string</td>
+                  <td class="param-desc">Job role/title</td>
+                </tr>
+                <tr class="param-row">
+                  <td class="param-name">email</td>
+                  <td class="param-type">string</td>
+                  <td class="param-desc">Email address</td>
+                </tr>
+                <tr class="param-row">
+                  <td class="param-name">phone</td>
+                  <td class="param-type">string</td>
+                  <td class="param-desc">Phone contact</td>
+                </tr>
+                <tr class="param-row">
+                  <td class="param-name">join_date</td>
+                  <td class="param-type">string</td>
+                  <td class="param-desc">ISO format YYYY-MM-DD. Defaults to today.</td>
+                </tr>
+              </table>
+            </div>
+            
+            <div>
+              <div class="details-title">💻 Code Snippet</div>
+              <div class="snippet-tabs">
+                <button class="snippet-tab active" onclick="switchSnippet(this, 'create-emp', 'curl')">cURL</button>
+                <button class="snippet-tab" onclick="switchSnippet(this, 'create-emp', 'js')">JS Fetch</button>
+                <button class="snippet-tab" onclick="switchSnippet(this, 'create-emp', 'python')">Python</button>
+              </div>
+              <div class="code-block-wrapper">
+                <button class="btn-copy-snippet" onclick="copySnippetText(this)">Copy</button>
+                <pre class="code-pre"><code id="code-create-emp-curl">curl -X POST {{ network_url }}/api/employees \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer YOUR_TOKEN" \
+  -d '{"employee_id": "EMP100", "full_name": "Ramesh Kumar", "department": "SCADA", "position": "Engineer"}'</code><code id="code-create-emp-js" style="display:none;">fetch('{{ network_url }}/api/employees', {
+  method: 'POST',
+  headers: { 
+    'Content-Type': 'application/json',
+    'Authorization': 'Bearer YOUR_TOKEN'
+  },
+  body: JSON.stringify({
+    employee_id: 'EMP100',
+    full_name: 'Ramesh Kumar',
+    department: 'SCADA',
+    position: 'Engineer'
+  })
+})
+.then(res => res.json())
+.then(data => console.log(data));</code><code id="code-create-emp-python" style="display:none;">import requests
+
+url = "{{ network_url }}/api/employees"
+headers = {
+    "Authorization": "Bearer YOUR_TOKEN",
+    "Content-Type": "application/json"
+}
+payload = {
+    "employee_id": "EMP100",
+    "full_name": "Ramesh Kumar",
+    "department": "SCADA",
+    "position": "Engineer"
+}
+
+response = requests.post(url, headers=headers, json=payload)
+print(response.json())</code></pre>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Sandbox Panel -->
+          <div class="sandbox-panel">
+            <div class="sandbox-header">
+              <div class="sandbox-title">⚡ Interactive Sandbox Client</div>
+              <button class="btn btn-primary btn-sm" onclick="runSandboxRequest('create-emp', '/api/employees', 'POST')">Send Request</button>
+            </div>
+            <div class="sandbox-inputs">
+              <div class="sandbox-input-row">
+                <span class="sandbox-input-label">Payload Body</span>
+                <textarea id="body-create-emp" class="sandbox-input sandbox-textarea">{\n  "employee_id": "EMP030",\n  "full_name": "Siddharth Sharma",\n  "department": "IT",\n  "position": "Senior Developer",\n  "email": "sid@jdtech.com",\n  "phone": "9876543210",\n  "join_date": "2026-05-26"\n}</textarea>
+              </div>
+            </div>
+            
+            <div id="response-create-emp" class="console-response">
+              <div class="console-meta">
+                <span>Response Output</span>
+                <span id="response-status-create-emp" class="status-pill status-success">HTTP 201</span>
+              </div>
+              <pre class="code-pre" style="border-radius:0 0 8px 8px; border-top:none;"><code id="response-body-create-emp"></code></pre>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- DELETE /api/employees/<emp_id> -->
+      <div class="endpoint-card">
+        <div class="endpoint-header" onclick="toggleAccordion(this)">
+          <div class="endpoint-meta">
+            <span class="method-badge method-delete">DELETE</span>
+            <span class="endpoint-path">/api/employees/&lt;employee_id&gt;</span>
+            <span class="endpoint-desc">Deactivate employee from directory</span>
+          </div>
+          <div class="endpoint-chevron">▼</div>
+        </div>
+        <div class="endpoint-content">
+          <div class="endpoint-grid">
+            <div>
+              <div class="details-title">📋 URL Parameters</div>
+              <table class="param-table">
+                <tr class="param-row">
+                  <td class="param-name">employee_id<span class="param-required">*</span></td>
+                  <td class="param-type">string</td>
+                  <td class="param-desc">Target unique employee code (e.g. EMP030)</td>
+                </tr>
+              </table>
+            </div>
+            
+            <div>
+              <div class="details-title">💻 Code Snippet</div>
+              <div class="snippet-tabs">
+                <button class="snippet-tab active" onclick="switchSnippet(this, 'delete-emp', 'curl')">cURL</button>
+                <button class="snippet-tab" onclick="switchSnippet(this, 'delete-emp', 'js')">JS Fetch</button>
+                <button class="snippet-tab" onclick="switchSnippet(this, 'delete-emp', 'python')">Python</button>
+              </div>
+              <div class="code-block-wrapper">
+                <button class="btn-copy-snippet" onclick="copySnippetText(this)">Copy</button>
+                <pre class="code-pre"><code id="code-delete-emp-curl">curl -X DELETE {{ network_url }}/api/employees/EMP030 \
+  -H "Authorization: Bearer YOUR_TOKEN"</code><code id="code-delete-emp-js" style="display:none;">fetch('{{ network_url }}/api/employees/EMP030', {
+  method: 'DELETE',
+  headers: { 'Authorization': 'Bearer YOUR_TOKEN' }
+})
+.then(res => res.json())
+.then(data => console.log(data));</code><code id="code-delete-emp-python" style="display:none;">import requests
+
+url = "{{ network_url }}/api/employees/EMP030"
+headers = {"Authorization": "Bearer YOUR_TOKEN"}
+
+response = requests.delete(url, headers=headers)
+print(response.json())</code></pre>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Sandbox Panel -->
+          <div class="sandbox-panel">
+            <div class="sandbox-header">
+              <div class="sandbox-title">⚡ Interactive Sandbox Client</div>
+              <button class="btn btn-primary btn-sm" onclick="runSandboxRequest('delete-emp', '/api/employees/RESOURCE_ID', 'DELETE')">Send Request</button>
+            </div>
+            <div class="sandbox-inputs">
+              <div class="sandbox-input-row">
+                <span class="sandbox-input-label">employee_id</span>
+                <input type="text" id="param-delete-emp-id" class="sandbox-input" placeholder="EMP030">
+              </div>
+            </div>
+            
+            <div id="response-delete-emp" class="console-response">
+              <div class="console-meta">
+                <span>Response Output</span>
+                <span id="response-status-delete-emp" class="status-pill status-success">HTTP 200</span>
+              </div>
+              <pre class="code-pre" style="border-radius:0 0 8px 8px; border-top:none;"><code id="response-body-delete-emp"></code></pre>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Attendance Ledger Section -->
+    <section id="attendance" class="api-section">
+      <h2 class="api-section-title">📅 Attendance Ledger</h2>
+      <p class="api-intro-text">
+        These endpoints manage real-time employee attendance marking, check-in registration, and custom remarks. 
+        <strong>Access Control Notice:</strong> Regular employee tokens can query or mark <strong>only their own personal 
+        attendance</strong>. Administrative tokens can query, add, or overwrite any employee's ledger.
+      </p>
+      
+      <!-- GET /api/attendance -->
+      <div class="endpoint-card">
+        <div class="endpoint-header" onclick="toggleAccordion(this)">
+          <div class="endpoint-meta">
+            <span class="method-badge method-get">GET</span>
+            <span class="endpoint-path">/api/attendance</span>
+            <span class="endpoint-desc">Fetch filtered list of attendance records</span>
+          </div>
+          <div class="endpoint-chevron">▼</div>
+        </div>
+        <div class="endpoint-content">
+          <div class="endpoint-grid">
+            <div>
+              <div class="details-title">📋 Query Parameters</div>
+              <table class="param-table">
+                <tr class="param-row">
+                  <td class="param-name">employee_id</td>
+                  <td class="param-type">string</td>
+                  <td class="param-desc">Filter by employee. (Ignored for non-admins).</td>
+                </tr>
+                <tr class="param-row">
+                  <td class="param-name">date</td>
+                  <td class="param-type">string</td>
+                  <td class="param-desc">ISO format YYYY-MM-DD. Filter by single day.</td>
+                </tr>
+                <tr class="param-row">
+                  <td class="param-name">start_date</td>
+                  <td class="param-type">string</td>
+                  <td class="param-desc">ISO format YYYY-MM-DD. Filter range start.</td>
+                </tr>
+                <tr class="param-row">
+                  <td class="param-name">end_date</td>
+                  <td class="param-type">string</td>
+                  <td class="param-desc">ISO format YYYY-MM-DD. Filter range end.</td>
+                </tr>
+                <tr class="param-row">
+                  <td class="param-name">department</td>
+                  <td class="param-type">string</td>
+                  <td class="param-desc">Filter by company department.</td>
+                </tr>
+              </table>
+            </div>
+            
+            <div>
+              <div class="details-title">💻 Code Snippet</div>
+              <div class="snippet-tabs">
+                <button class="snippet-tab active" onclick="switchSnippet(this, 'get-attendance', 'curl')">cURL</button>
+                <button class="snippet-tab" onclick="switchSnippet(this, 'get-attendance', 'js')">JS Fetch</button>
+                <button class="snippet-tab" onclick="switchSnippet(this, 'get-attendance', 'python')">Python</button>
+              </div>
+              <div class="code-block-wrapper">
+                <button class="btn-copy-snippet" onclick="copySnippetText(this)">Copy</button>
+                <pre class="code-pre"><code id="code-get-attendance-curl">curl "{{ network_url }}/api/attendance?date=2026-05-26" \
+  -H "Authorization: Bearer YOUR_TOKEN"</code><code id="code-get-attendance-js" style="display:none;">fetch('{{ network_url }}/api/attendance?date=2026-05-26', {
+  method: 'GET',
+  headers: { 'Authorization': 'Bearer YOUR_TOKEN' }
+})
+.then(res => res.json())
+.then(data => console.log(data));</code><code id="code-get-attendance-python" style="display:none;">import requests
+
+url = "{{ network_url }}/api/attendance"
+headers = {"Authorization": "Bearer YOUR_TOKEN"}
+params = {"date": "2026-05-26"}
+
+response = requests.get(url, headers=headers, params=params)
+print(response.json())</code></pre>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Sandbox Panel -->
+          <div class="sandbox-panel">
+            <div class="sandbox-header">
+              <div class="sandbox-title">⚡ Interactive Sandbox Client</div>
+              <button class="btn btn-primary btn-sm" onclick="runSandboxRequest('get-attendance', '/api/attendance', 'GET')">Send Request</button>
+            </div>
+            <div class="sandbox-inputs">
+              <div class="sandbox-input-row">
+                <span class="sandbox-input-label">Date (YYYY-MM-DD)</span>
+                <input type="text" id="query-get-attendance-date" class="sandbox-input" placeholder="2026-05-26">
+              </div>
+              <div class="sandbox-input-row">
+                <span class="sandbox-input-label">Employee ID (Admins)</span>
+                <input type="text" id="query-get-attendance-employee_id" class="sandbox-input" placeholder="EMP018">
+              </div>
+              <div class="sandbox-input-row">
+                <span class="sandbox-input-label">Department</span>
+                <input type="text" id="query-get-attendance-department" class="sandbox-input" placeholder="SCADA">
+              </div>
+            </div>
+            
+            <div id="response-get-attendance" class="console-response">
+              <div class="console-meta">
+                <span>Response Output</span>
+                <span id="response-status-get-attendance" class="status-pill status-success">HTTP 200</span>
+              </div>
+              <pre class="code-pre" style="border-radius:0 0 8px 8px; border-top:none;"><code id="response-body-get-attendance"></code></pre>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- POST /api/attendance/mark -->
+      <div class="endpoint-card">
+        <div class="endpoint-header" onclick="toggleAccordion(this)">
+          <div class="endpoint-meta">
+            <span class="method-badge method-post">POST</span>
+            <span class="endpoint-path">/api/attendance/mark</span>
+            <span class="endpoint-desc">Register or update check-in ledger details</span>
+          </div>
+          <div class="endpoint-chevron">▼</div>
+        </div>
+        <div class="endpoint-content">
+          <div class="endpoint-grid">
+            <div>
+              <div class="details-title">📋 Payload Specification</div>
+              <table class="param-table">
+                <tr class="param-row">
+                  <td class="param-name">employee_id</td>
+                  <td class="param-type">string</td>
+                  <td class="param-desc">Target employee code. Optional for self-marking. Mandatory for admins.</td>
+                </tr>
+                <tr class="param-row">
+                  <td class="param-name">date</td>
+                  <td class="param-type">string</td>
+                  <td class="param-desc">ISO format YYYY-MM-DD. Defaults to today's date.</td>
+                </tr>
+                <tr class="param-row">
+                  <td class="param-name">status<span class="param-required">*</span></td>
+                  <td class="param-type">string</td>
+                  <td class="param-desc">Must be one of: <code>Present</code>, <code>Absent</code>, or <code>Half Day</code>.</td>
+                </tr>
+                <tr class="param-row">
+                  <td class="param-name">check_in</td>
+                  <td class="param-type">string</td>
+                  <td class="param-desc">HH:MM format. Defaults to local server current time.</td>
+                </tr>
+                <tr class="param-row">
+                  <td class="param-name">check_out</td>
+                  <td class="param-type">string</td>
+                  <td class="param-desc">HH:MM format. Register checkout details.</td>
+                </tr>
+                <tr class="param-row">
+                  <td class="param-name">location</td>
+                  <td class="param-type">string</td>
+                  <td class="param-desc">Active location site name (e.g. MRF TC1). Set to empty if Absent.</td>
+                </tr>
+                <tr class="param-row">
+                  <td class="param-name">notes</td>
+                  <td class="param-type">string</td>
+                  <td class="param-desc">Custom remarks or logs.</td>
+                </tr>
+              </table>
+            </div>
+            
+            <div>
+              <div class="details-title">💻 Code Snippet</div>
+              <div class="snippet-tabs">
+                <button class="snippet-tab active" onclick="switchSnippet(this, 'mark-att', 'curl')">cURL</button>
+                <button class="snippet-tab" onclick="switchSnippet(this, 'mark-att', 'js')">JS Fetch</button>
+                <button class="snippet-tab" onclick="switchSnippet(this, 'mark-att', 'python')">Python</button>
+              </div>
+              <div class="code-block-wrapper">
+                <button class="btn-copy-snippet" onclick="copySnippetText(this)">Copy</button>
+                <pre class="code-pre"><code id="code-mark-att-curl">curl -X POST {{ network_url }}/api/attendance/mark \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer YOUR_TOKEN" \
+  -d '{"status": "Present", "location": "MRF TC1", "notes": "On-site"}'</code><code id="code-mark-att-js" style="display:none;">fetch('{{ network_url }}/api/attendance/mark', {
+  method: 'POST',
+  headers: { 
+    'Content-Type': 'application/json',
+    'Authorization': 'Bearer YOUR_TOKEN'
+  },
+  body: JSON.stringify({
+    status: 'Present',
+    location: 'MRF TC1',
+    notes: 'On-site installation completed'
+  })
+})
+.then(res => res.json())
+.then(data => console.log(data));</code><code id="code-mark-att-python" style="display:none;">import requests
+
+url = "{{ network_url }}/api/attendance/mark"
+headers = {
+    "Authorization": "Bearer YOUR_TOKEN",
+    "Content-Type": "application/json"
+}
+payload = {
+    "status": "Present",
+    "location": "MRF TC1",
+    "notes": "On-site installation completed"
+}
+
+response = requests.post(url, headers=headers, json=payload)
+print(response.json())</code></pre>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Sandbox Panel -->
+          <div class="sandbox-panel">
+            <div class="sandbox-header">
+              <div class="sandbox-title">⚡ Interactive Sandbox Client</div>
+              <button class="btn btn-primary btn-sm" onclick="runSandboxRequest('mark-att', '/api/attendance/mark', 'POST')">Send Request</button>
+            </div>
+            <div class="sandbox-inputs">
+              <div class="sandbox-input-row">
+                <span class="sandbox-input-label">Payload Body</span>
+                <textarea id="body-mark-att" class="sandbox-input sandbox-textarea">{\n  "status": "Present",\n  "location": "MRF TC1",\n  "notes": "Checked in via API portal test console.",\n  "check_in": "09:00"\n}</textarea>
+              </div>
+            </div>
+            
+            <div id="response-mark-att" class="console-response">
+              <div class="console-meta">
+                <span>Response Output</span>
+                <span id="response-status-mark-att" class="status-pill status-success">HTTP 200</span>
+              </div>
+              <pre class="code-pre" style="border-radius:0 0 8px 8px; border-top:none;"><code id="response-body-mark-att"></code></pre>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Locations Section -->
+    <section id="locations" class="api-section">
+      <h2 class="api-section-title">📍 Office Locations</h2>
+      <p class="api-intro-text">
+        These endpoints query and append to the catalog of verified job site locations where employees are stationed.
+      </p>
+      
+      <!-- GET /api/locations -->
+      <div class="endpoint-card">
+        <div class="endpoint-header" onclick="toggleAccordion(this)">
+          <div class="endpoint-meta">
+            <span class="method-badge method-get">GET</span>
+            <span class="endpoint-path">/api/locations</span>
+            <span class="endpoint-desc">Fetch a list of verified sites</span>
+          </div>
+          <div class="endpoint-chevron">▼</div>
+        </div>
+        <div class="endpoint-content">
+          <div class="endpoint-grid">
+            <div>
+              <div class="details-title">📋 Specifications</div>
+              <p class="api-intro-text" style="font-size:12px;">
+                No parameters required. Returns an array of strings representing site names sorted alphabetically.
+              </p>
+            </div>
+            
+            <div>
+              <div class="details-title">💻 Code Snippet</div>
+              <div class="snippet-tabs">
+                <button class="snippet-tab active" onclick="switchSnippet(this, 'get-locs', 'curl')">cURL</button>
+                <button class="snippet-tab" onclick="switchSnippet(this, 'get-locs', 'js')">JS Fetch</button>
+                <button class="snippet-tab" onclick="switchSnippet(this, 'get-locs', 'python')">Python</button>
+              </div>
+              <div class="code-block-wrapper">
+                <button class="btn-copy-snippet" onclick="copySnippetText(this)">Copy</button>
+                <pre class="code-pre"><code id="code-get-locs-curl">curl {{ network_url }}/api/locations \
+  -H "Authorization: Bearer YOUR_TOKEN"</code><code id="code-get-locs-js" style="display:none;">fetch('{{ network_url }}/api/locations', {
+  method: 'GET',
+  headers: { 'Authorization': 'Bearer YOUR_TOKEN' }
+})
+.then(res => res.json())
+.then(data => console.log(data));</code><code id="code-get-locs-python" style="display:none;">import requests
+
+url = "{{ network_url }}/api/locations"
+headers = {"Authorization": "Bearer YOUR_TOKEN"}
+
+response = requests.get(url, headers=headers)
+print(response.json())</code></pre>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Sandbox Panel -->
+          <div class="sandbox-panel">
+            <div class="sandbox-header">
+              <div class="sandbox-title">⚡ Interactive Sandbox Client</div>
+              <button class="btn btn-primary btn-sm" onclick="runSandboxRequest('get-locs', '/api/locations', 'GET')">Send Request</button>
+            </div>
+            <div class="sandbox-inputs" style="margin-bottom:0;">
+              <!-- No parameters -->
+            </div>
+            
+            <div id="response-get-locs" class="console-response">
+              <div class="console-meta">
+                <span>Response Output</span>
+                <span id="response-status-get-locs" class="status-pill status-success">HTTP 200</span>
+              </div>
+              <pre class="code-pre" style="border-radius:0 0 8px 8px; border-top:none;"><code id="response-body-get-locs"></code></pre>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- POST /api/locations -->
+      <div class="endpoint-card">
+        <div class="endpoint-header" onclick="toggleAccordion(this)">
+          <div class="endpoint-meta">
+            <span class="method-badge method-post">POST</span>
+            <span class="endpoint-path">/api/locations</span>
+            <span class="endpoint-desc">Register a new office or client site location</span>
+          </div>
+          <div class="endpoint-chevron">▼</div>
+        </div>
+        <div class="endpoint-content">
+          <div class="endpoint-grid">
+            <div>
+              <div class="details-title">📋 Payload Specification</div>
+              <table class="param-table">
+                <tr class="param-row">
+                  <td class="param-name">name<span class="param-required">*</span></td>
+                  <td class="param-type">string</td>
+                  <td class="param-desc">Verified unique name of the location or site (e.g. MRF CHENNAI).</td>
+                </tr>
+              </table>
+            </div>
+            
+            <div>
+              <div class="details-title">💻 Code Snippet</div>
+              <div class="snippet-tabs">
+                <button class="snippet-tab active" onclick="switchSnippet(this, 'create-loc', 'curl')">cURL</button>
+                <button class="snippet-tab" onclick="switchSnippet(this, 'create-loc', 'js')">JS Fetch</button>
+                <button class="snippet-tab" onclick="switchSnippet(this, 'create-loc', 'python')">Python</button>
+              </div>
+              <div class="code-block-wrapper">
+                <button class="btn-copy-snippet" onclick="copySnippetText(this)">Copy</button>
+                <pre class="code-pre"><code id="code-create-loc-curl">curl -X POST {{ network_url }}/api/locations \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer YOUR_TOKEN" \
+  -d '{"name": "MRF CHENNAI"}'</code><code id="code-create-loc-js" style="display:none;">fetch('{{ network_url }}/api/locations', {
+  method: 'POST',
+  headers: { 
+    'Content-Type': 'application/json',
+    'Authorization': 'Bearer YOUR_TOKEN'
+  },
+  body: JSON.stringify({ name: 'MRF CHENNAI' })
+})
+.then(res => res.json())
+.then(data => console.log(data));</code><code id="code-create-loc-python" style="display:none;">import requests
+
+url = "{{ network_url }}/api/locations"
+headers = {
+    "Authorization": "Bearer YOUR_TOKEN",
+    "Content-Type": "application/json"
+}
+payload = {"name": "MRF CHENNAI"}
+
+response = requests.post(url, headers=headers, json=payload)
+print(response.json())</code></pre>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Sandbox Panel -->
+          <div class="sandbox-panel">
+            <div class="sandbox-header">
+              <div class="sandbox-title">⚡ Interactive Sandbox Client</div>
+              <button class="btn btn-primary btn-sm" onclick="runSandboxRequest('create-loc', '/api/locations', 'POST')">Send Request</button>
+            </div>
+            <div class="sandbox-inputs">
+              <div class="sandbox-input-row">
+                <span class="sandbox-input-label">Payload Body</span>
+                <textarea id="body-create-loc" class="sandbox-input sandbox-textarea">{\n  "name": "MRF CHENNAI"\n}</textarea>
+              </div>
+            </div>
+            
+            <div id="response-create-loc" class="console-response">
+              <div class="console-meta">
+                <span>Response Output</span>
+                <span id="response-status-create-loc" class="status-pill status-success">HTTP 201</span>
+              </div>
+              <pre class="code-pre" style="border-radius:0 0 8px 8px; border-top:none;"><code id="response-body-create-loc"></code></pre>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </div>
+</div>
+
+<script>
+  // API Accordion behavior
+  function toggleAccordion(header) {
+    const card = header.parentElement;
+    card.classList.toggle('active');
+  }
+
+  // Code Snippet tabs switcher
+  function switchSnippet(tab, key, lang) {
+    // Deactivate all sibling tabs
+    const tabs = tab.parentElement.querySelectorAll('.snippet-tab');
+    tabs.forEach(t => t.classList.remove('active'));
+    tab.classList.add('active');
+
+    // Hide all code blocks for this key
+    const card = tab.closest('.endpoint-content');
+    const codes = card.querySelectorAll('pre.code-pre code');
+    codes.forEach(c => c.style.display = 'none');
+
+    // Show correct code block
+    const targetCode = card.querySelector(`#code-${key}-${lang}`);
+    if (targetCode) targetCode.style.display = 'block';
+  }
+
+  // Copy Snippet text
+  function copySnippetText(btn) {
+    const pre = btn.nextElementSibling;
+    // Find the currently active/visible code tag inside the pre
+    let codeStr = "";
+    pre.querySelectorAll('code').forEach(c => {
+      if (c.style.display !== 'none') {
+        codeStr = c.textContent;
+      }
+    });
+
+    navigator.clipboard.writeText(codeStr).then(() => {
+      btn.textContent = 'Copied!';
+      btn.style.color = 'var(--present)';
+      setTimeout(() => {
+        btn.textContent = 'Copy';
+        btn.style.color = 'var(--muted)';
+      }, 2000);
+    });
+  }
+
+  // Load active token on launch
+  document.addEventListener('DOMContentLoaded', () => {
+    const savedToken = localStorage.getItem('api_bearer_token');
+    if (savedToken) {
+      document.getElementById('tokenDisplayWrapper').style.display = 'flex';
+      document.getElementById('activeTokenStr').textContent = savedToken;
+      updateSnippetsWithToken(savedToken);
+    }
+  });
+
+  // Master Token generator click handler
+  function generateToken() {
+    const u = document.getElementById('authUsername').value.trim();
+    const p = document.getElementById('authPassword').value;
+
+    if (!u || !p) {
+      alert('Please fill out username and password fields to acquire a Bearer token.');
+      return;
+    }
+
+    fetch('/api/auth/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username: u, password: p })
+    })
+    .then(res => {
+      if (!res.ok) {
+        return res.json().then(d => { throw new Error(d.error || 'Authentication failed') });
+      }
+      return res.json();
+    })
+    .then(data => {
+      if (data.token) {
+        localStorage.setItem('api_bearer_token', data.token);
+        document.getElementById('tokenDisplayWrapper').style.display = 'flex';
+        document.getElementById('activeTokenStr').textContent = data.token;
+        updateSnippetsWithToken(data.token);
+        
+        // Flash a notification inside the inputs
+        document.getElementById('authUsername').value = '';
+        document.getElementById('authPassword').value = '';
+        alert('✅ Bearer token acquired and saved to sandbox console!');
+      }
+    })
+    .catch(err => {
+      alert('Error: ' + err.message);
+    });
+  }
+
+  // Copy local storage token
+  function copyToken() {
+    const token = localStorage.getItem('api_bearer_token') || "";
+    if (token) {
+      navigator.clipboard.writeText(token).then(() => {
+        alert('✅ Bearer Token copied to clipboard!');
+      });
+    }
+  }
+
+  // Update dynamic snippets with active token
+  function updateSnippetsWithToken(token) {
+    document.querySelectorAll('code').forEach(c => {
+      if (c.id.includes('login')) return; // skip login snippet
+      c.innerHTML = c.innerHTML.replace(/YOUR_TOKEN/g, token);
+    });
+  }
+
+  // Sandbox Live AJAX query engine
+  function runSandboxRequest(key, pathPattern, method) {
+    const token = localStorage.getItem('api_bearer_token');
+    const headers = { 'Content-Type': 'application/json' };
+    
+    if (token) {
+      headers['Authorization'] = 'Bearer ' + token;
+    }
+
+    let url = pathPattern;
+    let body = null;
+
+    // Build URL parameters or body based on method
+    if (method === 'GET') {
+      const params = new URLSearchParams();
+      if (key === 'get-employees') {
+        const act = document.getElementById('query-get-employees-active').value.trim();
+        if (act) params.append('active', act);
+      } else if (key === 'get-attendance') {
+        const dt = document.getElementById('query-get-attendance-date').value.trim();
+        const eid = document.getElementById('query-get-attendance-employee_id').value.trim();
+        const dep = document.getElementById('query-get-attendance-department').value.trim();
+        if (dt) params.append('date', dt);
+        if (eid) params.append('employee_id', eid);
+        if (dep) params.append('department', dep);
+      }
+      const queryString = params.toString();
+      if (queryString) url += '?' + queryString;
+    } else if (method === 'DELETE') {
+      if (key === 'delete-emp') {
+        const id = document.getElementById('param-delete-emp-id').value.trim();
+        if (!id) {
+          alert('Please enter an employee_id value to delete.');
+          return;
+        }
+        url = `/api/employees/${id}`;
+      }
+    } else if (method === 'POST') {
+      const textarea = document.getElementById(`body-${key}`);
+      if (textarea) {
+        try {
+          body = JSON.stringify(JSON.parse(textarea.value));
+        } catch (e) {
+          alert('Invalid JSON structure entered in body textarea!');
+          return;
+        }
+      }
+    }
+
+    // Toggle loader
+    const responseBox = document.getElementById(`response-${key}`);
+    const statusPill = document.getElementById(`response-status-${key}`);
+    const bodyPill = document.getElementById(`response-body-${key}`);
+    
+    responseBox.style.display = 'block';
+    bodyPill.textContent = 'Executing request to the server... Please wait.';
+    statusPill.className = 'status-pill';
+    statusPill.textContent = 'PENDING';
+    statusPill.style.background = 'rgba(245, 158, 11, 0.15)';
+    statusPill.style.color = '#f59e0b';
+
+    const t0 = performance.now();
+
+    fetch(url, {
+      method: method,
+      headers: headers,
+      body: body
+    })
+    .then(res => {
+      const t1 = performance.now();
+      const timeMs = Math.round(t1 - t0);
+      
+      statusPill.textContent = `HTTP ${res.status} (${timeMs}ms)`;
+      
+      if (res.ok) {
+        statusPill.className = 'status-pill status-success';
+      } else {
+        statusPill.className = 'status-pill status-error';
+      }
+      
+      return res.json().then(data => {
+        bodyPill.textContent = JSON.stringify(data, null, 2);
+      }).catch(() => {
+        bodyPill.textContent = 'Error parsing JSON response.';
+      });
+    })
+    .catch(err => {
+      statusPill.textContent = 'CONNECTION ERROR';
+      statusPill.className = 'status-pill status-error';
+      bodyPill.textContent = err.toString();
+    });
+  }
+
+  // Dynamic Outline active selection styling
+  window.addEventListener('scroll', () => {
+    const sections = document.querySelectorAll('.api-section');
+    const navLinks = document.querySelectorAll('.api-nav-link');
+    
+    let currentId = 'intro';
+    sections.forEach(sec => {
+      const top = sec.offsetTop - 100;
+      if (window.scrollY >= top) {
+        currentId = sec.getAttribute('id');
+      }
+    });
+
+    navLinks.forEach(link => {
+      link.classList.remove('active');
+      if (link.getAttribute('href') === `#${currentId}`) {
+        link.classList.add('active');
+      }
+    });
+  });
+</script>
+{% endblock %}

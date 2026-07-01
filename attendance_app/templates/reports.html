@@ -1,0 +1,248 @@
+{% extends 'base.html' %}
+{% block title %}Reports — JD TECH{% endblock %}
+{% block page_title %}Reports{% endblock %}
+{% block page_subtitle %}Monthly attendance summary{% endblock %}
+
+{% block topbar_actions %}
+<div class="dropdown" style="position: relative; display: inline-block; z-index: 10;">
+  <button class="btn btn-primary dropdown-toggle" onclick="toggleDropdown()" style="padding: 10px 20px; font-size: 13px; font-weight: 700; display: flex; align-items: center; gap: 8px; cursor: pointer;">
+    ⬇ Export Report <span style="font-size: 10px;">▼</span>
+  </button>
+  <div id="exportDropdown" class="dropdown-menu" style="display: none; position: absolute; right: 0; top: 100%; margin-top: 8px; min-width: 210px; background: #111827; border: 1px solid var(--border); border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.5); overflow: hidden; backdrop-filter: blur(10px);">
+    <a href="{{ url_for('export_csv', filter_type=filter_type, month=month, start_date=start_date, end_date=end_date, dept=dept, format='pdf') }}" style="display: flex; align-items: center; gap: 8px; padding: 12px 16px; color: var(--text); text-decoration: none; font-size: 13px; font-weight: 500; transition: background 0.2s;" onmouseover="this.style.background='rgba(0,212,170,0.1)'" onmouseout="this.style.background='none'">
+      <span>📄</span> Download PDF Report
+    </a>
+    <a href="{{ url_for('export_csv', filter_type=filter_type, month=month, start_date=start_date, end_date=end_date, dept=dept, format='xlsx') }}" style="display: flex; align-items: center; gap: 8px; padding: 12px 16px; color: var(--text); text-decoration: none; font-size: 13px; font-weight: 500; border-top: 1px solid rgba(255,255,255,0.05); transition: background 0.2s;" onmouseover="this.style.background='rgba(0,212,170,0.1)'" onmouseout="this.style.background='none'">
+      <span>📊</span> Download Excel (.xlsx)
+    </a>
+  </div>
+</div>
+
+<script>
+function toggleDropdown() {
+  const el = document.getElementById('exportDropdown');
+  el.style.display = el.style.display === 'none' ? 'block' : 'none';
+}
+// Close dropdown if user clicks outside
+window.addEventListener('click', function(event) {
+  const toggle = document.querySelector('.dropdown-toggle');
+  const menu = document.getElementById('exportDropdown');
+  if (menu && toggle && !toggle.contains(event.target) && !menu.contains(event.target)) {
+    menu.style.display = 'none';
+  }
+});
+</script>
+{% endblock %}
+
+
+{% block content %}
+<style>
+/* Reports Mobile Responsive Adjustments */
+@media (max-width: 768px) {
+  .dropdown {
+    width: 100% !important;
+  }
+  .dropdown-toggle {
+    width: 100% !important;
+    justify-content: center !important;
+  }
+  .dropdown-menu {
+    width: 100% !important;
+    left: 0 !important;
+    right: 0 !important;
+  }
+  .card form {
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 16px !important;
+  }
+  .card form .form-group {
+    width: 100% !important;
+    margin: 0 !important;
+  }
+  .card form .form-group select, 
+  .card form .form-group input {
+    width: 100% !important;
+  }
+  .card form button {
+    width: 100% !important;
+    justify-content: center !important;
+    padding: 12px !important;
+  }
+  .table-wrap table {
+    min-width: 900px !important;
+  }
+}
+</style>
+
+<!-- Filters -->
+<div class="card" style="margin-bottom:20px;">
+  <form method="GET" style="display:flex; gap:16px; align-items:flex-end; flex-wrap:wrap;">
+    <div class="form-group" style="margin:0;">
+      <label>Report View</label>
+      <select id="filter_type" name="filter_type" style="width:160px; padding: 10px 14px; font-size:14px; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.08); border-radius: 10px; color: var(--text); cursor:pointer;" onchange="toggleFilterType(this.value)">
+        <option value="monthly" {% if filter_type != 'custom' %}selected{% endif %}>Monthly View</option>
+        <option value="custom" {% if filter_type == 'custom' %}selected{% endif %}>Custom Date Range</option>
+      </select>
+    </div>
+    
+    <div id="month_picker_group" class="form-group" style="margin:0; display: {% if filter_type == 'custom' %}none{% else %}block{% endif %};">
+      <label>Month</label>
+      <input type="month" name="month" value="{{ month }}" style="width:180px; padding: 10px 14px; font-size:14px; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.08); border-radius: 10px; color: var(--text);">
+    </div>
+    
+    <div id="start_date_picker_group" class="form-group" style="margin:0; display: {% if filter_type == 'custom' %}block{% else %}none{% endif %};">
+      <label>Start Date</label>
+      <input type="date" name="start_date" value="{{ start_date }}" style="width:180px; padding: 10px 14px; font-size:14px; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.08); border-radius: 10px; color: var(--text);">
+    </div>
+    
+    <div id="end_date_picker_group" class="form-group" style="margin:0; display: {% if filter_type == 'custom' %}block{% else %}none{% endif %};">
+      <label>End Date</label>
+      <input type="date" name="end_date" value="{{ end_date }}" style="width:180px; padding: 10px 14px; font-size:14px; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.08); border-radius: 10px; color: var(--text);">
+    </div>
+
+    <div class="form-group" style="margin:0;">
+      <label>Department</label>
+      <select name="dept" style="width:180px; padding: 10px 14px; font-size:14px; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.08); border-radius: 10px; color: var(--text); cursor:pointer;">
+        <option value="All" {% if dept=='All' %}selected{% endif %}>All Departments</option>
+        {% for d in depts %}
+        <option value="{{ d }}" {% if dept==d %}selected{% endif %}>{{ d }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <button type="submit" class="btn btn-secondary" style="padding: 11px 24px; font-weight:700;">Apply Filters</button>
+  </form>
+</div>
+
+<script>
+function toggleFilterType(val) {
+  const monthGroup = document.getElementById('month_picker_group');
+  const startGroup = document.getElementById('start_date_picker_group');
+  const endGroup = document.getElementById('end_date_picker_group');
+  
+  if (val === 'custom') {
+    monthGroup.style.display = 'none';
+    startGroup.style.display = 'block';
+    endGroup.style.display = 'block';
+  } else {
+    monthGroup.style.display = 'block';
+    startGroup.style.display = 'none';
+    endGroup.style.display = 'none';
+  }
+}
+</script>
+
+<!-- Summary Stats -->
+{% if rows %}
+{% set total_present = rows | sum(attribute='present_days') %}
+{% set total_absent = rows | sum(attribute='absent_days') %}
+<div class="grid grid-2" style="margin-bottom:20px;">
+  <div class="stat-card green">
+    <div class="stat-label">Total Present Days</div>
+    <div class="stat-value" style="font-size:28px;">{{ total_present }}</div>
+  </div>
+  <div class="stat-card red">
+    <div class="stat-label">Total Absent Days</div>
+    <div class="stat-value" style="font-size:28px;">{{ total_absent }}</div>
+  </div>
+</div>
+{% endif %}
+
+<div class="card">
+  <div class="card-title">📋 Employee-wise Summary — {% if filter_type == 'custom' %}{{ start_date }} to {{ end_date }}{% else %}{{ month }}{% endif %} {% if dept != 'All' %}· {{ dept }}{% endif %}</div>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Employee ID</th>
+          <th>Name</th>
+          <th>Department</th>
+          <th style="color:var(--present);">Present</th>
+          <th style="color:var(--absent);">Absent</th>
+          <th style="color:var(--halfday);">Half Day</th>
+          <th>Marked Days</th>
+          <th>Attendance %</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for r in rows %}
+        {% set pct = ((r.present_days + r.halfday_days * 0.5) / end_day * 100) | round(1) if end_day > 0 else 0 %}
+        <tr>
+          <td><span style="font-family:monospace;color:var(--accent);font-size:12px;">{{ r.employee_id }}</span></td>
+          <td><strong>{{ r.full_name }}</strong></td>
+          <td style="color:var(--muted);">{{ r.department }}</td>
+          <td><span class="badge badge-present">{{ r.present_days }}</span></td>
+          <td><span class="badge badge-absent">{{ r.absent_days }}</span></td>
+          <td><span class="badge badge-halfday">{{ r.halfday_days }}</span></td>
+          <td style="color:var(--muted);">{{ r.total_marked }} / {{ end_day }}</td>
+          <td>
+            <div style="display:flex; align-items:center; gap:8px;">
+              <div style="width:60px; background:var(--surface2); border-radius:4px; height:6px;">
+                <div style="width:{{ pct }}%; height:100%; background:{% if pct >= 75 %}var(--present){% elif pct >= 50 %}var(--warn){% else %}var(--absent){% endif %}; border-radius:4px;"></div>
+              </div>
+              <span style="font-size:12px; font-weight:700; color:{% if pct >= 75 %}var(--present){% elif pct >= 50 %}var(--warn){% else %}var(--absent){% endif %};">
+                {{ pct }}%
+              </span>
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% if not rows %}
+    <div style="text-align:center; padding:60px 20px; color:var(--text); background: rgba(17,24,39,0.3); border-radius: 12px; border: 1px dashed var(--border); margin: 20px; position: relative; overflow: hidden;">
+      <div style="position: absolute; top: -50px; left: -50px; width: 150px; height: 150px; background: radial-gradient(circle, rgba(139,92,246,0.1), transparent 70%); border-radius: 50%;"></div>
+      <div style="position: absolute; bottom: -50px; right: -50px; width: 150px; height: 150px; background: radial-gradient(circle, rgba(245,158,11,0.1), transparent 70%); border-radius: 50%;"></div>
+      
+      <div style="font-size:56px; margin-bottom:20px; text-shadow: 0 10px 20px rgba(0,0,0,0.3); animation: float 3s ease-in-out infinite;">📊</div>
+      <h3 style="font-family: 'Syne', sans-serif; font-size: 24px; font-weight: 700; margin-bottom: 12px; background: linear-gradient(135deg, var(--halfday), var(--warn)); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">No Attendance Data Found</h3>
+      <p style="color:var(--muted); max-width: 450px; margin: 0 auto 24px; font-size: 14px; line-height: 1.6;">
+        We couldn't find any attendance records for <strong>{% if filter_type == 'custom' %}{{ start_date }} to {{ end_date }}{% else %}{{ month }}{% endif %}</strong>{% if dept != 'All' %} in <strong>{{ dept }}</strong>{% endif %}.
+      </p>
+
+      <div style="background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; padding: 16px; max-width: 350px; margin: 0 auto; text-align: left;">
+        <strong style="color: var(--text); font-size: 13px; display: block; margin-bottom: 8px;">💡 What you can do:</strong>
+        <ul style="list-style:none; padding:0; margin:0; font-size: 12px; color: var(--muted); line-height: 1.8;">
+          <li>✓ Select a different month from the filter above.</li>
+          <li>✓ Ensure attendance was marked for this period.</li>
+          <li>✓ Try selecting "All Departments" to view company-wide data.</li>
+        </ul>
+      </div>
+    </div>
+    <style>
+      @keyframes float {
+        0% { transform: translateY(0px); }
+        50% { transform: translateY(-10px); }
+        100% { transform: translateY(0px); }
+      }
+    </style>
+    {% endif %}
+  </div>
+</div>
+
+{% if loc_rows %}
+<!-- Location Breakdown -->
+<div class="card" style="margin-top: 24px;">
+  <div class="card-title">📍 Location Breakdown — {% if filter_type == 'custom' %}{{ start_date }} to {{ end_date }}{% else %}{{ month }}{% endif %} {% if dept != 'All' %}· {{ dept }}{% endif %}</div>
+  {% set loc_total = loc_rows | sum(attribute='count') %}
+  <div style="display: flex; flex-wrap: wrap; gap: 16px; margin-bottom: 20px;">
+    {% for loc, cnt in loc_rows %}
+    {% set pct = (cnt / loc_total * 100) | round(1) if loc_total > 0 else 0 %}
+    <div style="flex: 1; min-width: 160px; background: rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.06); border-radius: 14px; padding: 18px 20px;">
+      <div style="font-size: 13px; font-weight: 700; margin-bottom: 8px;">
+        {% if loc == 'WFH' %}🏠 WFH
+        {% elif loc == 'Office' %}🏢 Office
+        {% else %}📍 {{ loc }}{% endif %}
+      </div>
+      <div style="font-size: 26px; font-weight: 800; font-family: 'Syne', sans-serif; margin-bottom: 8px;">{{ cnt }}</div>
+      <div style="background: var(--surface2); border-radius: 4px; height: 6px;">
+        <div style="width: {{ pct }}%; height: 100%; background: {% if loc == 'WFH' %}#8b5cf6{% elif loc == 'Office' %}#3b82f6{% else %}var(--accent){% endif %}; border-radius: 4px; transition: width 0.4s;"></div>
+      </div>
+      <div style="font-size: 11px; color: var(--muted); margin-top: 6px;">{{ pct }}% of all entries</div>
+    </div>
+    {% endfor %}
+  </div>
+</div>
+{% endif %}
+
+{% endblock %}

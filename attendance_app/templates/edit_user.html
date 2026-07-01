@@ -1,0 +1,58 @@
+{% extends 'base.html' %}
+{% block title %}Edit User — JD TECH{% endblock %}
+{% block page_title %}Edit User{% endblock %}
+{% block page_subtitle %}Update system user details and access controls{% endblock %}
+
+{% block topbar_actions %}
+<a href="{{ url_for('manage_users') }}" class="btn btn-secondary">← Back to Users</a>
+{% endblock %}
+
+{% block content %}
+<div class="card" style="max-width: 600px; margin: 0 auto; background: rgba(17, 24, 39, 0.6); backdrop-filter: blur(24px); border: 1px solid rgba(255, 255, 255, 0.08); padding: 40px; border-radius: 24px; box-shadow: 0 40px 80px rgba(0,0,0,0.6);">
+  <div class="card-title" style="margin-bottom: 24px; font-size: 20px;">✏️ Edit User Details</div>
+  <form method="POST">
+    <div class="form-group" style="margin-bottom: 16px;">
+      <label for="edit_full_name">Full Name</label>
+      <input id="edit_full_name" name="full_name" value="{{ user.full_name }}" required style="width: 100%; padding: 12px; background: rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.05); border-radius: 8px; color: var(--text);">
+    </div>
+    <div class="form-group" style="margin-bottom: 16px;">
+      <label for="edit_username">Username</label>
+      <input id="edit_username" name="username" value="{{ user.username }}" required style="width: 100%; padding: 12px; background: rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.05); border-radius: 8px; color: var(--text);">
+    </div>
+    <div class="form-group" style="margin-bottom: 16px;">
+      <label for="edit_password">Password <span style="color:var(--muted); font-weight:400; font-size:12px;">(Leave blank to keep current password)</span></label>
+      <input id="edit_password" name="password" type="password" placeholder="Enter new password to change..." style="width: 100%; padding: 12px; background: rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.05); border-radius: 8px; color: var(--text);">
+    </div>
+    <div class="form-group" style="margin-bottom: 16px;">
+      <label for="edit_role">Role</label>
+      <select id="edit_role" name="role" required style="width: 100%; padding: 12px; background: rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.05); border-radius: 8px; color: var(--text);">
+        <option value="employee" {% if user.role == 'employee' %}selected{% endif %}>Employee</option>
+        <option value="admin" {% if user.role == 'admin' %}selected{% endif %}>Admin</option>
+      </select>
+    </div>
+    <div class="form-group" style="margin-bottom: 16px;">
+      <label for="edit_department">Department</label>
+      <input id="edit_department" name="department" value="{{ user.department or '' }}" style="width: 100%; padding: 12px; background: rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.05); border-radius: 8px; color: var(--text);">
+    </div>
+    <div class="form-group" style="margin-bottom: 16px;">
+      <label for="edit_email">Email</label>
+      <input id="edit_email" name="email" type="email" value="{{ user.email or '' }}" style="width: 100%; padding: 12px; background: rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.05); border-radius: 8px; color: var(--text);">
+    </div>
+    <div class="form-group" style="margin-bottom: 24px;">
+      <label for="edit_employee_id">Employee ID <span style="color:var(--muted); font-weight:400; font-size:12px;">(Select existing or type new to auto-create)</span></label>
+      <input id="edit_employee_id" name="employee_id" list="emp-list" value="{{ user.employee_id or '' }}" autocomplete="off" style="width: 100%; padding: 12px; background: rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.05); border-radius: 8px; color: var(--text);">
+      <datalist id="emp-list">
+        {% for emp in employees %}
+        <option value="{{ emp.employee_id }}">{{ emp.full_name }}</option>
+        {% endfor %}
+      </datalist>
+    </div>
+    
+
+    <div class="btn-group" style="display: flex; gap: 12px; justify-content: flex-end;">
+      <a href="{{ url_for('manage_users') }}" class="btn btn-secondary">Cancel</a>
+      <button type="submit" class="btn btn-primary" style="padding: 12px 24px; box-shadow: 0 8px 24px rgba(0,212,170,0.25);">💾 Save Changes</button>
+    </div>
+  </form>
+</div>
+{% endblock %}

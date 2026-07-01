@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>{% block title %}JD TECH{% endblock %}</title>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/base.css') }}">
+<link rel="manifest" href="/manifest.json">
+</head>
+<body>
+<div class="live-bg"></div>
+<div class="noise-overlay"></div>
+<div class="watermark">JD TECH</div>
+<div class="sidebar-overlay" onclick="toggleMobileSidebar()"></div>
+
+<aside class="sidebar">
+  <div class="sidebar-brand" style="text-align:center;">
+    <img src="{{ url_for('static', filename='logo.jpg') }}" alt="JD TECH Logo" style="max-width:140px; height:auto; margin-bottom:10px;">
+  </div>
+  <nav class="sidebar-nav">
+    <div class="nav-section">Main</div>
+    <a href="{{ url_for('dashboard') }}" class="nav-item {% if request.endpoint=='dashboard' %}active{% endif %}">
+      <span class="icon">📊</span> Dashboard
+    </a>
+    {% if session.get('role') == 'admin' %}
+    <a href="{{ url_for('mark_attendance') }}" class="nav-item {% if request.endpoint=='mark_attendance' %}active{% endif %}">
+      <span class="icon">✅</span> View Attendance
+    </a>
+    {% endif %}
+    <div class="nav-section">Manage</div>
+    <a href="{{ url_for('employees') }}" class="nav-item {% if request.endpoint in ['employees','add_employee'] %}active{% endif %}">
+      <span class="icon">👥</span> Employees
+    </a>
+    <a href="{{ url_for('reports') }}" class="nav-item {% if request.endpoint=='reports' %}active{% endif %}">
+      <span class="icon">📈</span> Reports
+    </a>
+    {% if session.get('role') == 'admin' %}
+    <div class="nav-section">Admin</div>
+    <a href="{{ url_for('manage_users') }}" class="nav-item {% if request.endpoint=='manage_users' %}active{% endif %}">
+      <span class="icon">🔐</span> Users
+    </a>
+    <a href="{{ url_for('manage_locations') }}" class="nav-item {% if request.endpoint=='manage_locations' %}active{% endif %}">
+      <span class="icon">📍</span> Geo-Fence
+    </a>
+
+    {% endif %}
+
+  </nav>
+  <div class="sidebar-footer">
+    <div class="user-badge">
+      <div class="avatar">{{ session.get('full_name','U')[0] }}</div>
+      <div class="user-info">
+        <div class="user-name">{{ session.get('full_name','User') }}</div>
+        <div class="user-role">{{ session.get('role','employee') }}</div>
+      </div>
+    </div>
+    <a href="{{ url_for('logout') }}" class="logout-link">⬤ Sign out</a>
+  </div>
+</aside>
+
+<main class="main">
+  <div class="topbar">
+    <div style="display:flex; align-items:center; gap:14px;">
+      <button class="menu-toggle" onclick="toggleMobileSidebar()">☰</button>
+      <div>
+        <h1 class="page-title">{% block page_title %}Dashboard{% endblock %}</h1>
+        <div class="page-subtitle">{% block page_subtitle %}{% endblock %}</div>
+      </div>
+    </div>
+    <div>{% block topbar_actions %}{% endblock %}</div>
+  </div>
+  <div class="content">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% for cat, msg in messages %}
+        <div class="alert alert-{{ cat }}">
+          {% if cat == 'success' %}✓{% elif cat == 'info' %}ℹ{% else %}✗{% endif %} {{ msg }}
+        </div>
+      {% endfor %}
+    {% endwith %}
+    {% block content %}{% endblock %}
+  </div>
+</main>
+
+  <!-- Mobile Link Modal -->
+  <div id="mobileModal" class="modal-overlay" onclick="closeMobileModal(event)">
+    <div class="modal-card" onclick="event.stopPropagation()">
+      <button class="modal-close" onclick="closeMobileModal(event)">×</button>
+      <div class="modal-header">
+        <div class="modal-icon">📱</div>
+        <h3>Mobile Access Portal</h3>
+        <p>Connect and mark attendance from your mobile phone</p>
+      </div>
+      <div class="modal-body">
+        {% if public_url %}
+        <!-- Tab Switcher -->
+        <div class="tab-container" style="display: flex; background: var(--surface2); border: 1px solid var(--border); border-radius: 12px; padding: 4px; margin-bottom: 20px;">
+          <button id="tabLocal" type="button" onclick="switchAccessTab('local')" style="flex: 1; padding: 8px; border: none; border-radius: 8px; font-size: 11px; font-weight: 700; cursor: pointer; font-family: 'Syne', sans-serif; transition: all 0.2s; background: transparent; color: var(--muted);">
+            📡 Same Wi-Fi Link
+          </button>
+          <button id="tabPublic" type="button" onclick="switchAccessTab('public')" style="flex: 1; padding: 8px; border: none; border-radius: 8px; font-size: 11px; font-weight: 700; cursor: pointer; font-family: 'Syne', sans-serif; transition: all 0.2s; background: var(--accent); color: #000;">
+            🌍 Public Internet Link
+          </button>
+        </div>
+        {% endif %}
+
+        <div class="qr-container">
+          <img id="qrCodeImg" src="https://api.qrserver.com/v1/create-qr-code/?size=180x180&data={{ network_url | urlencode }}&color=00d4aa&bgcolor=111827" alt="Scan to open on mobile" class="qr-img">
+          <div class="qr-glow"></div>
+        </div>
+        
+        <div class="step-guide">
+          <div class="step">
+            <span class="step-num">1</span>
+            <span class="step-text" id="stepOneText">{% if public_url %}Use mobile data or any Wi-Fi connection.{% else %}Connect phone to the same Wi-Fi / Local Network.{% endif %}</span>
+          </div>
+          <div class="step">
+            <span class="step-num">2</span>
+            <span class="step-text">Scan the QR code with your camera or QR scanner.</span>
+          </div>
+          <div class="step">
+            <span class="step-num">3</span>
+            <span class="step-text">Or enter this link in your phone's browser:</span>
+          </div>
+        </div>
+
+        <div class="link-copier">
+          <span class="link-text" id="mobileLinkText">{{ network_url }}</span>
+          <button class="btn-copy" onclick="copyMobileLink()" id="btnCopy">
+            <span id="copyText">Copy Link</span>
+            <span id="copyIcon">📋</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+<script>
+function toggleMobileSidebar() {
+  const sidebar = document.querySelector('.sidebar');
+  const overlay = document.querySelector('.sidebar-overlay');
+  if (sidebar && overlay) {
+    sidebar.classList.toggle('active');
+    overlay.classList.toggle('active');
+  }
+}
+
+function openMobileModal() {
+  const modal = document.getElementById('mobileModal');
+  if (modal) modal.classList.add('active');
+}
+
+function closeMobileModal(event) {
+  const modal = document.getElementById('mobileModal');
+  if (modal) modal.classList.remove('active');
+}
+
+let localUrl = "http://{{ local_ip }}:5001";
+let publicUrl = "{{ public_url or '' }}";
+let currentUrl = publicUrl ? publicUrl : localUrl;
+
+function switchAccessTab(type) {
+  const tabLocal = document.getElementById('tabLocal');
+  const tabPublic = document.getElementById('tabPublic');
+  const qrImg = document.getElementById('qrCodeImg');
+  const linkText = document.getElementById('mobileLinkText');
+  const stepOne = document.getElementById('stepOneText');
+  
+  if (type === 'local') {
+    if (tabLocal) {
+      tabLocal.style.background = 'var(--accent)';
+      tabLocal.style.color = '#000';
+    }
+    if (tabPublic) {
+      tabPublic.style.background = 'transparent';
+      tabPublic.style.color = 'var(--muted)';
+    }
+    if (stepOne) {
+      stepOne.textContent = 'Connect phone to the same Wi-Fi / Local Network.';
+    }
+    currentUrl = localUrl;
+  } else {
+    if (tabPublic) {
+      tabPublic.style.background = 'var(--accent)';
+      tabPublic.style.color = '#000';
+    }
+    if (tabLocal) {
+      tabLocal.style.background = 'transparent';
+      tabLocal.style.color = 'var(--muted)';
+    }
+    if (stepOne) {
+      stepOne.textContent = 'Use mobile data or any Wi-Fi connection.';
+    }
+    currentUrl = publicUrl;
+  }
+  
+  qrImg.src = `https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(currentUrl)}&color=00d4aa&bgcolor=111827`;
+  linkText.textContent = currentUrl;
+}
+
+function copyMobileLink() {
+  const linkText = document.getElementById('mobileLinkText').textContent;
+  navigator.clipboard.writeText(linkText).then(() => {
+    const copyTextEl = document.getElementById('copyText');
+    const copyIconEl = document.getElementById('copyIcon');
+    const btn = document.getElementById('btnCopy');
+    
+    if (copyTextEl && copyIconEl) {
+      copyTextEl.textContent = 'Copied!';
+      copyIconEl.textContent = '✓';
+      btn.style.background = '#10b981';
+      btn.style.color = '#fff';
+      
+      setTimeout(() => {
+        copyTextEl.textContent = 'Copy Link';
+        copyIconEl.textContent = '📋';
+        btn.style.background = 'var(--accent)';
+        btn.style.color = '#000';
+      }, 2000);
+    }
+  }).catch(err => {
+    console.error('Could not copy text: ', err);
+  });
+}
+
+// Register PWA Service Worker
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/sw.js')
+      .then(reg => console.log('Service Worker registered successfully!', reg.scope))
+      .catch(err => console.log('Service Worker registration failed:', err));
+  });
+}
+</script>
+</body>
+</html>

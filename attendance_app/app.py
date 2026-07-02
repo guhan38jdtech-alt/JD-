@@ -184,6 +184,10 @@ def init_db():
             
     db.session.commit()
 
+# ── Auto-initialize Database (Runs on startup / import) ────────────────────────
+with app.app_context():
+    init_db()
+
 # ── Auth decorators ────────────────────────────────────────────────────────────
 
 def login_required(f):
@@ -275,10 +279,10 @@ def start_public_tunnel():
     SERVICES = [
         ("free.pinggy.io",
          ["-p", "443", "-R", "0:127.0.0.1:5001"],
-         r'https://[a-zA-Z0-9.-]+\.pinggy\.link'),
+         r'https://[a-zA-Z0-9.-]+\.(?:pinggy(?:-free)?\.link|pinggy\.net)'),
         ("serveo.net",
          ["-R", "80:127.0.0.1:5001"],
-         r'https://[a-zA-Z0-9.-]+\.serveo\.net'),
+         r'https://(?!console\.)[a-zA-Z0-9.-]+\.serveo\.net'),
         ("nokey@localhost.run",
          ["-R", "80:127.0.0.1:5001"],
          r'https://([a-zA-Z0-9-]+)\.(?:lhr\.life|lhrtunnel\.link|lhr\.rocks)'),
@@ -286,11 +290,12 @@ def start_public_tunnel():
 
     def run_tunnel(host, ssh_args, url_pattern):
         global public_url, _tunnel_process
+        process = None
         try:
             cmd = ["ssh"] + SSH_OPTS + ssh_args + [host]
             process = subprocess.Popen(
                 cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
-                text=True, bufsize=1)
+                text=True, encoding='utf-8', bufsize=1)
             _tunnel_process = process
 
             for line in iter(process.stdout.readline, ''):
@@ -311,6 +316,15 @@ def start_public_tunnel():
         except Exception as e:
             print(f"  [Tunnel] {host} error: {e}")
         finally:
+            if process and process.poll() is None:
+                try:
+                    process.terminate()
+                    process.wait(timeout=2)
+                except Exception:
+                    try:
+                        process.kill()
+                    except Exception:
+                        pass
             _tunnel_process = None
             public_url = None  # Clear stale URL when session drops
 
@@ -1553,10 +1567,6 @@ def serve_sw():
     return response
 
 if __name__ == '__main__':
-    with app.app_context():
-        init_db()
-
-    
     tunnel_thread = threading.Thread(target=start_public_tunnel, daemon=True)
     tunnel_thread.start()
 
